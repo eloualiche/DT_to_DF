@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.361">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Erik Loualiche (eloualic@umn.edu)">
+<meta name="dcterms.date" content="2023-06-22">
+
+<title>Tips for using DataFrames.jl from R data.table</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>
+
+      .quarto-title-block .quarto-title-banner h1,
+      .quarto-title-block .quarto-title-banner h2,
+      .quarto-title-block .quarto-title-banner h3,
+      .quarto-title-block .quarto-title-banner h4,
+      .quarto-title-block .quarto-title-banner h5,
+      .quarto-title-block .quarto-title-banner h6
+      {
+        color: white;
+      }
+
+      .quarto-title-block .quarto-title-banner {
+        color: white;
+background: #014421;
+      }
+</style>
+
+
+<link rel="stylesheet" href="style_jupyter.css">
+</head>
+
+<body class="floating">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Tips for using DataFrames.jl from R data.table</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Erik Loualiche (eloualic@umn.edu) </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">June 22, 2023</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal sidebar-navigation floating overflow-auto">
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">DataFrames.jl Cheatsheet</h2>
+   
+  <ul class="collapse">
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a></li>
+  <li><a href="#file-io" id="toc-file-io" class="nav-link" data-scroll-target="#file-io">File I/O</a>
+  <ul class="collapse">
+  <li><a href="#reading-data" id="toc-reading-data" class="nav-link" data-scroll-target="#reading-data">Reading Data</a></li>
+  <li><a href="#writing-data" id="toc-writing-data" class="nav-link" data-scroll-target="#writing-data">Writing Data</a></li>
+  <li><a href="#benchmarks" id="toc-benchmarks" class="nav-link" data-scroll-target="#benchmarks">(Benchmarks)</a></li>
+  </ul></li>
+  <li><a href="#inspecting-the-dataset" id="toc-inspecting-the-dataset" class="nav-link" data-scroll-target="#inspecting-the-dataset">Inspecting the dataset</a>
+  <ul class="collapse">
+  <li><a href="#sorting" id="toc-sorting" class="nav-link" data-scroll-target="#sorting">Sorting</a></li>
+  <li><a href="#renaming" id="toc-renaming" class="nav-link" data-scroll-target="#renaming">Renaming</a></li>
+  <li><a href="#summary-statistics" id="toc-summary-statistics" class="nav-link" data-scroll-target="#summary-statistics">Summary Statistics</a></li>
+  <li><a href="#tabulations" id="toc-tabulations" class="nav-link" data-scroll-target="#tabulations">Tabulations</a></li>
+  </ul></li>
+  <li><a href="#filtering" id="toc-filtering" class="nav-link" data-scroll-target="#filtering">Filtering</a>
+  <ul class="collapse">
+  <li><a href="#subsetting-rows" id="toc-subsetting-rows" class="nav-link" data-scroll-target="#subsetting-rows">Subsetting rows</a></li>
+  <li><a href="#dropping-duplicate-or-missing-values" id="toc-dropping-duplicate-or-missing-values" class="nav-link" data-scroll-target="#dropping-duplicate-or-missing-values">Dropping duplicate or missing values</a></li>
+  <li><a href="#selecting-columns" id="toc-selecting-columns" class="nav-link" data-scroll-target="#selecting-columns">Selecting columns</a></li>
+  <li><a href="#rows-and-columns" id="toc-rows-and-columns" class="nav-link" data-scroll-target="#rows-and-columns">Rows and columns</a></li>
+  </ul></li>
+  <li><a href="#creatingmodifying-variables" id="toc-creatingmodifying-variables" class="nav-link" data-scroll-target="#creatingmodifying-variables">Creating/modifying variables</a>
+  <ul class="collapse">
+  <li><a href="#basic-operations" id="toc-basic-operations" class="nav-link" data-scroll-target="#basic-operations">Basic operations</a></li>
+  <li><a href="#grouped-operations" id="toc-grouped-operations" class="nav-link" data-scroll-target="#grouped-operations">Grouped operations</a></li>
+  <li><a href="#leads-and-lags" id="toc-leads-and-lags" class="nav-link" data-scroll-target="#leads-and-lags">Leads and lags</a></li>
+  <li><a href="#advanced-examples" id="toc-advanced-examples" class="nav-link" data-scroll-target="#advanced-examples">Advanced examples</a></li>
+  </ul></li>
+  <li><a href="#aggregating" id="toc-aggregating" class="nav-link" data-scroll-target="#aggregating">Aggregating</a></li>
+  <li><a href="#reshape" id="toc-reshape" class="nav-link" data-scroll-target="#reshape">Reshape</a></li>
+  <li><a href="#merge" id="toc-merge" class="nav-link" data-scroll-target="#merge">Merge</a>
+  <ul class="collapse">
+  <li><a href="#basic-merge" id="toc-basic-merge" class="nav-link" data-scroll-target="#basic-merge">Basic merge</a></li>
+  <li><a href="#advanced-merging" id="toc-advanced-merging" class="nav-link" data-scroll-target="#advanced-merging">Advanced merging</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</nav>
+<div id="quarto-sidebar-glass" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar,#quarto-sidebar-glass"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<section id="resources" class="level4">
+<h4 class="anchored" data-anchor-id="resources">Resources</h4>
+<ul>
+<li>I will mostly follow the excellent <a href="https://stata2r.github.io/data.table/#installation"><code>stata2r</code></a> as a template.</li>
+<li>You can also have a look at some of the mappings in the <code>DataFrames.jl</code> <a href="https://dataframes.juliadata.org/stable/man/comparisons/">documentation</a></li>
+<li>I have found this <a href="http://brooksandrew.github.io/simpleblog/articles/advanced-data-table/">guide</a> of data.table by Andrew Brooks very useful.</li>
+</ul>
+</section>
+<section id="a-word-of-warning" class="level4">
+<h4 class="anchored" data-anchor-id="a-word-of-warning">A word of warning</h4>
+<ul>
+<li><strong>Missing Data.</strong> Dealing with missing data in julia requires to be explicit as most functions will return a <code>missing</code> value if an array includes a missing element. Some functions will error. I will try to point out the equivalence with the <code>R</code> code but be aware that the equivalence might not be always be strictly the same if you implement it. I show some of the examples on the <em>Freedman</em> dataset from the <code>car</code> package in R.</li>
+<li><strong>Need improvement.</strong>
+<ul>
+<li>A few specific sections could use some user inputs as the julia solutions were less than ideal: <a href="http://localhost:5005/#leads-and-lags"><em>Leads and lags</em></a>; <em>Dates</em>; <em>Complex merges</em></li>
+</ul></li>
+</ul>
+</section>
+<section id="issues" class="level4">
+<h4 class="anchored" data-anchor-id="issues">Issues</h4>
+<ul>
+<li>This is a first draft and there might be a few mistakes throughout the document. I am not a professional and I probably picked up bad habits here and there.</li>
+<li>Email me at <a href="mailto:eloualic@umn.edu">eloualic@umn.edu</a></li>
+<li>File an issue on <a href="https://eloualiche.github.io/DT_to_DF">github here</a> if you want to start a dicussion or have ideas of things to add/change</li>
+</ul>
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+<section id="installation" class="level1">
+<h1>Installation</h1>
+<div class="grid">
+<div class="g-col-6">
+<p>Installation can sometime be challenging. This should not be an issue in <code>julia</code> here. We will mostly use the base <code>DataFrames</code> package and the convenient macros in the <code>DataFramesMeta</code> package. To read in data we will use the <code>CSV</code> package while julia supports many different file formats (see <a href="https://github.com/JuliaIO/FileIO.jl"><code>FileIO.jl</code></a>)</p>
+</div>
+<div class="g-col-6">
+<p>Installation for <code>data.table</code> can be tricky especially if you want to benefit from the multicore features. I recommend that you look at the <a href="https://github.com/Rdatatable/data.table/wiki/Installation">installation wiki</a> for more details.</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1"></a><span class="im">import</span> <span class="bu">Pkg</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"DataFrames"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"DataFramesMeta"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4"></a></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co"># Load the packages</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="im">using</span> <span class="bu">DataFrames</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="im">using</span> <span class="bu">DataFramesMeta</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">install.packages</span>(<span class="st">"data.table"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2"></a></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co"># latest development version that has passed all tests:</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a>data.table<span class="sc">::</span><span class="fu">update_dev_pkg</span>()</span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="co"># load the package</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<p>We will also use other packages to load auxiliary datasets, download data etc. I use the pipe macro in julia and the magrittr package in R to compose commands (though both packages have some amount of chaining built-in)</p>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"CSV"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"ShiftedArrays"</span>) <span class="co"># lead/lag operators</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"HTTP"</span>) <span class="co"># download utilities</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"RDatasets"</span>) </span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"Pipe"</span>) <span class="co"># pipes</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a></span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="co"># Load the packages</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a><span class="im">using</span> <span class="bu">HTTP</span></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="im">using</span> <span class="bu">CSV</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a><span class="im">using</span> <span class="bu">RDatasets</span></span>
+<span id="cb3-11"><a href="#cb3-11"></a><span class="im">using</span> <span class="bu">Pipe</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a><span class="im">using</span> <span class="bu">ShiftedArrays</span></span>
+<span id="cb3-13"><a href="#cb3-13"></a><span class="im">using</span> <span class="bu">Dates</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a></span>
+<span id="cb3-15"><a href="#cb3-15"></a><span class="co"># We will need some statistical function from the Base package</span></span>
+<span id="cb3-16"><a href="#cb3-16"></a><span class="im">import</span> <span class="bu">Statistics</span>: mean </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">install.packages</span>(<span class="st">"car"</span>)       <span class="co"># RDataset</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="fu">install.packages</span>(<span class="st">"magrittr"</span>)  <span class="co"># pipes</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="fu">install.packages</span>(<span class="st">"statar"</span>)    <span class="co"># stata-style data utilities</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="fu">install.packages</span>(<span class="st">"lubridate"</span>) <span class="co"># date utilities</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="co"># Load the package</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="fu">library</span>(car)</span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="fu">library</span>(magrittr)</span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="fu">library</span>(statar)</span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="fu">library</span>(lubridate)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+<section id="file-io" class="level1">
+<h1>File I/O</h1>
+<section id="reading-data" class="level2">
+<h2 class="anchored" data-anchor-id="reading-data">Reading Data</h2>
+<p>I am using the flight dataset to run most of the examples. This assumes your data is in a <code>csv</code> format.</p>
+<p>There are options in both languages to read from more efficient formats like parquet. I have found that csv is both fast and idioproof and lends itself to quick manipulation on the shell if I need to do something quickly.</p>
+<div class="grid">
+<div class="g-col-6">
+<p>In julia, the <code>CSV.jl</code> package does not allow to read directly from a url but we can use the <code>HTTP.jl</code> package to download the file.</p>
+</div>
+<div class="g-col-6">
+<p>In R, you can directly read the dataset from an <code>url</code> using <code>fread</code> in <code>data.table</code>.</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># Flights data</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>url_flights <span class="op">=</span> <span class="st">"https://raw.githubusercontent.com/Rdatatable/data.table/master/vignettes/flights14.csv"</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>url_get <span class="op">=</span> HTTP.<span class="fu">get</span>(url_flights);</span>
+<span id="cb5-4"><a href="#cb5-4"></a>dat <span class="op">=</span> CSV.<span class="fu">read</span>(url_get.body, DataFrame)</span>
+<span id="cb5-5"><a href="#cb5-5"></a></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="co"># Freedman data</span></span>
+<span id="cb5-7"><a href="#cb5-7"></a>dat_missing <span class="op">=</span> RDatasets.<span class="fu">dataset</span>(<span class="st">"car"</span>, <span class="st">"Freedman"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r code-overflow-scroll number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Flights data</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>url_flights <span class="ot">=</span> <span class="st">"https://raw.githubusercontent.com/Rdatatable/data.table/master/vignettes/flights14.csv"</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a></span>
+<span id="cb6-4"><a href="#cb6-4"></a>dat <span class="ot">=</span> <span class="fu">fread</span>(url_flights)</span>
+<span id="cb6-5"><a href="#cb6-5"></a></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co"># Freedman data</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a>dat_missing <span class="ot">=</span> <span class="fu">data.table</span>(Freedman) <span class="co"># load and convert to data.table</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="writing-data" class="level2">
+<h2 class="anchored" data-anchor-id="writing-data">Writing Data</h2>
+<div class="grid">
+<div class="g-col-6">
+<p>To write the file we use a similar function. It is also possible to save the file with compression</p>
+</div>
+<div class="g-col-6">
+<p>Similarly <code>data.table</code> provides a write function with optional compression</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb7"><pre class="sourceCode numberSource julia code-overflow-scroll number-lines code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1"></a>CSV.<span class="fu">write</span>(<span class="st">"./data.csv"</span>, dat)</span>
+<span id="cb7-2"><a href="#cb7-2"></a>CSV.<span class="fu">write</span>(<span class="st">"./data.csv.gz"</span>, dat; compress<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>If you want to set up a different compression algorithm (faster or more efficient) use <a href="https://github.com/JuliaIO/TranscodingStreams.jl"><code>TranscodingStreams.jl</code></a> with the appropriate codec. For example if you want to use zst you would do</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode numberSource julia code-overflow-scroll number-lines code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1"></a><span class="bu">Pkg</span>.<span class="fu">add</span>(<span class="st">"CodecZstd"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="im">using</span> <span class="bu">CodecZstd</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="fu">open</span>(ZstdCompressorStream, <span class="st">"./data.csv.zst"</span>, <span class="st">"w"</span>) <span class="cf">do</span> stream</span>
+<span id="cb8-4"><a href="#cb8-4"></a>    CSV.<span class="fu">write</span>(stream, dat)</span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="cf">end</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a></span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="co"># similarly to read it back</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a>dat <span class="op">=</span> <span class="fu">open</span>(ZstdDecompressorStream, <span class="st">"./data.csv.zst"</span>, <span class="st">"r"</span>) <span class="cf">do</span> stream</span>
+<span id="cb8-9"><a href="#cb8-9"></a>    CSV.<span class="fu">read</span>(stream, DataFrame)</span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="cf">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb9"><pre class="sourceCode numberSource r code-overflow-scroll number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="fu">fwrite</span>(dat, <span class="st">"./data.csv"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="fu">fwrite</span>(dat, <span class="st">"./data.csv.gz"</span>, <span class="at">compress=</span><span class="st">"gzip"</span>) <span class="co"># with compression</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="benchmarks" class="level2">
+<h2 class="anchored" data-anchor-id="benchmarks">(Benchmarks)</h2>
+<p>I would like to include a benchmark for one large file and compare csv intake to parquet.</p>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+<section id="inspecting-the-dataset" class="level1">
+<h1>Inspecting the dataset</h1>
+<p>This is before we start filtering, collapsing, or merging the data.</p>
+<section id="sorting" class="level2">
+<h2 class="anchored" data-anchor-id="sorting">Sorting</h2>
+<p>It is important to be able to sort rows. What are the most delayed flights, what about the most delayed flight on a specific day?</p>
+<p><em>Note that the code changes the order “in-place” as it changes the dataset itself.</em></p>
+<div class="grid">
+<div class="g-col-6">
+<p>The most basic task is to sort some columns with respect to a specific variable</p>
+</div>
+<div class="g-col-6">
+<p>Similarly <code>data.table</code> provides a write function with optional compression</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb10"><pre class="sourceCode numberSource julia code-overflow-scroll number-lines code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1"></a><span class="fu">sort!</span>(dat, <span class="op">:</span>air_time)</span>
+<span id="cb10-2"><a href="#cb10-2"></a><span class="fu">sort!</span>(dat, [<span class="op">:</span>air_time, <span class="op">:</span>dest])</span>
+<span id="cb10-3"><a href="#cb10-3"></a><span class="fu">sort!</span>(dat, <span class="op">:</span>air_time; rev<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb10-4"><a href="#cb10-4"></a><span class="fu">sort!</span>(dat, [<span class="fu">order</span>(<span class="op">:</span>air_time, rev<span class="op">=</span><span class="cn">true</span>), <span class="op">:</span>dest])</span>
+<span id="cb10-5"><a href="#cb10-5"></a></span>
+<span id="cb10-6"><a href="#cb10-6"></a><span class="co"># if you do not want to change the dataset in place</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a><span class="fu">sort</span>(dat, <span class="op">:</span>air_time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="fu">setorder</span>(dat, air_time) </span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="fu">setorder</span>(dat, air_time, dest) </span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="fu">setorder</span>(dat, <span class="sc">-</span>air_time)</span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="fu">setorder</span>(dat, <span class="sc">-</span>air_time, dest)</span>
+<span id="cb11-5"><a href="#cb11-5"></a></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="co"># if you do not want to change the dataset in place</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a>dat[ <span class="fu">order</span>(air_time)] <span class="co"># etc.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To reorder a dataset programmatically use the <code>setorderv</code> function</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>col <span class="ot">=</span> <span class="st">"air_time"</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="fu">setorderv</span>(dat, col)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<p>If we want to reorder <strong>columns</strong></p>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb13"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1"></a><span class="fu">select!</span>(dat, [<span class="op">:</span>month, <span class="op">:</span>day], <span class="fu">Not</span>([<span class="op">:</span>month, <span class="op">:</span>day]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a><span class="fu">setcolorder</span>(dat, <span class="fu">c</span>(<span class="st">"month"</span>, <span class="st">"day"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="renaming" class="level2">
+<h2 class="anchored" data-anchor-id="renaming">Renaming</h2>
+<p>Renaming does modify the dataset but it does not alter its data so we include it here.</p>
+<div class="grid">
+<div class="g-col-6">
+<p>This is where I start leaning on the macros from <code>DataFramesMeta.jl</code></p>
+</div>
+<div class="g-col-6">
+<p>Similarly <code>data.table</code> provides a write function with optional compression</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb15"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1"></a><span class="pp">@rename</span>!(dat, <span class="op">:</span>new_arr_delay <span class="op">=</span> <span class="op">:</span>arr_delay)</span>
+<span id="cb15-2"><a href="#cb15-2"></a><span class="pp">@rename</span>!(dat, <span class="op">:</span>new_carrier <span class="op">=</span> <span class="op">:</span>carrier, <span class="op">:</span>new_origin  <span class="op">=</span> <span class="op">$</span><span class="st">"origin"</span>) </span>
+<span id="cb15-3"><a href="#cb15-3"></a><span class="pp">@rename</span>(dat, <span class="op">:</span>new_arr_delay <span class="op">=</span> <span class="op">:</span>arr_delay) <span class="co"># not in place</span></span>
+<span id="cb15-4"><a href="#cb15-4"></a></span>
+<span id="cb15-5"><a href="#cb15-5"></a><span class="fu">rename!</span>(x <span class="op">-&gt;</span> <span class="fu">replace</span>(x, <span class="st">"arr_"</span> <span class="op">=&gt;</span> <span class="st">"arrival_"</span>), dat) <span class="co"># use the base DataFrames.jl function here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="fu">setnames</span>(dat, <span class="st">"new_arr_delay"</span>, <span class="st">"arrival_delay"</span>) </span>
+<span id="cb16-2"><a href="#cb16-2"></a><span class="fu">setnames</span>(dat, <span class="fu">c</span>(<span class="st">"carrier"</span>,<span class="st">"origin"</span>), <span class="fu">c</span>(<span class="st">"new_carrier"</span>,<span class="st">"new_origin"</span>)) </span>
+<span id="cb16-3"><a href="#cb16-3"></a></span>
+<span id="cb16-4"><a href="#cb16-4"></a></span>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="fu">setnames</span>(dat, <span class="fu">gsub</span>(<span class="st">"arr_"</span>, <span class="st">"arrival_"</span>, <span class="fu">names</span>(dat)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="summary-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="summary-statistics">Summary Statistics</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb17"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1"></a><span class="fu">describe</span>(dat)</span>
+<span id="cb17-2"><a href="#cb17-2"></a><span class="fu">describe</span>(dat, <span class="op">:</span>arr_delay)</span>
+<span id="cb17-3"><a href="#cb17-3"></a><span class="fu">describe</span>(dat, <span class="op">:</span>min, <span class="op">:</span>detailed, cols<span class="op">=:</span>arr_delay) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="fu">sum_up</span>(dat) <span class="co"># from statar package</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="fu">sum_up</span>(dat, arr_delay)</span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="fu">sum_up</span>(dat, arr_delay, <span class="at">d =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="tabulations" class="level2">
+<h2 class="anchored" data-anchor-id="tabulations">Tabulations</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb19"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1"></a>summary_var <span class="op">=</span> <span class="op">:</span>carrier <span class="co"># or [:carrier, :origin]</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a><span class="pp">@pipe</span> dat <span class="op">|&gt;</span> <span class="fu">groupby</span>(_, summary_var) <span class="op">|&gt;</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a>    <span class="fu">combine</span>(_, nrow <span class="op">=&gt;</span> <span class="op">:</span>Freq, proprow <span class="op">=&gt;</span> <span class="op">:</span>Percent) <span class="op">|&gt;</span></span>
+<span id="cb19-4"><a href="#cb19-4"></a>    <span class="pp">@transform</span>(_, <span class="op">:</span>Cum <span class="op">=</span> <span class="fu">cumsum</span>(<span class="op">:</span>Percent))</span>
+<span id="cb19-5"><a href="#cb19-5"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="fu">tab</span>(dat, carrier) <span class="co"># from statar package</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a><span class="fu">tab</span>(dat, carrier, origin)</span>
+<span id="cb20-3"><a href="#cb20-3"></a><span class="co"># data.table version</span></span>
+<span id="cb20-4"><a href="#cb20-4"></a>dat[, .N, by <span class="ot">=</span> .(carrier, origin)][,</span>
+<span id="cb20-5"><a href="#cb20-5"></a>    <span class="st">`</span><span class="at">:=</span><span class="st">`</span>(<span class="at">Percent=</span><span class="dv">100</span><span class="sc">*</span>N<span class="sc">/</span><span class="fu">nrow</span>(dat), <span class="at">Cum=</span><span class="dv">100</span><span class="sc">*</span><span class="fu">cumsum</span>(N)<span class="sc">/</span><span class="fu">nrow</span>(dat)) ][]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+<section id="filtering" class="level1">
+<h1>Filtering</h1>
+<section id="subsetting-rows" class="level2">
+<h2 class="anchored" data-anchor-id="subsetting-rows">Subsetting rows</h2>
+<section id="on-the-flights-data" class="level4">
+<h4 class="anchored" data-anchor-id="on-the-flights-data">On the flights data</h4>
+<div class="grid">
+<div class="g-col-6">
+<p>There are multiple options for filteringhis is where I start leaning on the macros from <code>DataFramesMeta.jl</code></p>
+</div>
+<div class="g-col-6">
+<p>In <code>data.table</code> filtering is not in place and you will need to assign the dataset (to itself) for the changes to propagate.</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb21"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1"></a>dat[<span class="fl">1</span><span class="op">:</span><span class="fl">200</span>, <span class="op">:</span>]</span>
+<span id="cb21-2"><a href="#cb21-2"></a><span class="fu">subset</span>(dat, <span class="op">:</span>day <span class="op">=&gt;</span> x <span class="op">-&gt;</span> x <span class="op">.&gt;</span> <span class="fl">5</span> <span class="op">.&amp;</span> x <span class="op">.&lt;</span> <span class="fl">10</span>) <span class="co"># from dataframes base</span></span>
+<span id="cb21-3"><a href="#cb21-3"></a><span class="pp">@subset</span>(dat, <span class="op">:</span>day <span class="op">.&gt;</span> <span class="fl">5</span> <span class="op">.&amp;</span> <span class="op">:</span>day <span class="op">.&lt;</span> <span class="fl">10</span>) <span class="co"># note the `.` for broadcasting</span></span>
+<span id="cb21-4"><a href="#cb21-4"></a><span class="pp">@rsubset</span>(dat, <span class="op">:</span>day <span class="op">&gt;</span> <span class="fl">5</span> <span class="op">&amp;</span> <span class="op">:</span>day <span class="op">&lt;</span> <span class="fl">10</span>)  <span class="co"># note the `r` for change by row</span></span>
+<span id="cb21-5"><a href="#cb21-5"></a><span class="pp">@rsubset</span>!(dat, <span class="op">:</span>day <span class="op">&gt;</span> <span class="fl">5</span> <span class="op">&amp;</span> <span class="op">:</span>day <span class="op">&lt;</span> <span class="fl">10</span>) <span class="co"># change in place</span></span>
+<span id="cb21-6"><a href="#cb21-6"></a><span class="pp">@rsubset</span>(dat, <span class="op">:</span>origin <span class="op">==</span> <span class="st">"LGA"</span>)</span>
+<span id="cb21-7"><a href="#cb21-7"></a><span class="pp">@rsubset</span>(dat, <span class="fu">occursin</span>(<span class="st">r"^LG"</span>, <span class="op">:</span>origin))</span>
+<span id="cb21-8"><a href="#cb21-8"></a><span class="pp">@rsubset</span>(dat, <span class="op">:</span>month <span class="op">∈</span> [<span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">11</span>, <span class="fl">12</span>])</span>
+<span id="cb21-9"><a href="#cb21-9"></a><span class="pp">@rsubset</span>(dat, <span class="op">:</span>origin <span class="op">∈</span> [<span class="st">"JFK"</span>, <span class="st">"LGA"</span>])</span>
+<span id="cb21-10"><a href="#cb21-10"></a><span class="pp">@rsubset</span>(dat, <span class="op">:</span>month <span class="op">!=</span> <span class="fl">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>dat[<span class="dv">1</span><span class="sc">:</span><span class="dv">200</span>] </span>
+<span id="cb22-2"><a href="#cb22-2"></a>dat[day <span class="sc">&gt;</span> <span class="dv">5</span> <span class="sc">&amp;</span> day <span class="sc">&lt;</span> <span class="dv">10</span>]        <span class="co"># filtering only</span></span>
+<span id="cb22-3"><a href="#cb22-3"></a></span>
+<span id="cb22-4"><a href="#cb22-4"></a></span>
+<span id="cb22-5"><a href="#cb22-5"></a>dat <span class="ot">=</span> dat[day <span class="sc">&gt;</span> <span class="dv">5</span> <span class="sc">&amp;</span> day <span class="sc">&lt;</span> <span class="dv">10</span>]  <span class="co"># filtering and reassigning</span></span>
+<span id="cb22-6"><a href="#cb22-6"></a>dat[origin<span class="sc">==</span><span class="st">"LGA"</span>]</span>
+<span id="cb22-7"><a href="#cb22-7"></a>dat[origin <span class="sc">%like%</span> <span class="st">"^LG"</span>] </span>
+<span id="cb22-8"><a href="#cb22-8"></a>dat[month <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">11</span>,<span class="dv">12</span>)] </span>
+<span id="cb22-9"><a href="#cb22-9"></a>dat[origin <span class="sc">%chin%</span> <span class="fu">c</span>(<span class="st">"JFK"</span>,<span class="st">"LGA"</span>)] <span class="co"># %chin% is a fast %in% for characters </span></span>
+<span id="cb22-10"><a href="#cb22-10"></a>dat[month<span class="sc">!=</span><span class="dv">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="on-the-freedman-data-with-missing-values" class="level4">
+<h4 class="anchored" data-anchor-id="on-the-freedman-data-with-missing-values">On the Freedman data (with missing values)</h4>
+<p>In this case we need to be careful on how we deal with missing data. Note that to find the missings julia uses the <code>isequal</code> function (because <code>missing===missing</code> returns missing).</p>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb23"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1"></a><span class="fu">subset</span>(dat_missing, <span class="op">:</span>Population <span class="op">=&gt;</span> x <span class="op">-&gt;</span> x <span class="op">.&lt;</span> <span class="fl">1000</span>; skipmissing<span class="op">=</span><span class="cn">true</span>)</span>
+<span id="cb23-2"><a href="#cb23-2"></a><span class="pp">@rsubset</span>(dat_missing, <span class="op">:</span>Population <span class="op">.&lt;</span> <span class="fl">1000</span>) <span class="co"># treats missing values as false by default</span></span>
+<span id="cb23-3"><a href="#cb23-3"></a><span class="pp">@rsubset</span>(dat_missing, <span class="fu">isequal</span>(<span class="op">:</span>Population, <span class="cn">missing</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>dat_missing[ population <span class="sc">&lt;</span> <span class="dv">1000</span> ]</span>
+<span id="cb24-2"><a href="#cb24-2"></a></span>
+<span id="cb24-3"><a href="#cb24-3"></a>dat_missing[<span class="fu">is.na</span>(population)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="dropping-duplicate-or-missing-values" class="level2">
+<h2 class="anchored" data-anchor-id="dropping-duplicate-or-missing-values">Dropping duplicate or missing values</h2>
+<section id="drop-duplicate-values" class="level4">
+<h4 class="anchored" data-anchor-id="drop-duplicate-values">Drop duplicate values</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb25"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1"></a><span class="fu">unique</span>(dat; keep<span class="op">=:</span>first)  <span class="co"># default</span></span>
+<span id="cb25-2"><a href="#cb25-2"></a><span class="fu">unique!</span>(dat; keep<span class="op">=:</span>first) <span class="co"># in place</span></span>
+<span id="cb25-3"><a href="#cb25-3"></a><span class="fu">unique</span>(dat; keep<span class="op">=:</span>noduplicates) <span class="co"># :last also an option</span></span>
+<span id="cb25-4"><a href="#cb25-4"></a><span class="fu">unique</span>(dat, [<span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>carrier])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">unique</span>(dat) </span>
+<span id="cb26-2"><a href="#cb26-2"></a>dat <span class="ot">=</span> <span class="fu">unique</span>(dat) </span>
+<span id="cb26-3"><a href="#cb26-3"></a></span>
+<span id="cb26-4"><a href="#cb26-4"></a><span class="fu">unique</span>(dat, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"month"</span>, <span class="st">"day"</span>, <span class="st">"carrier"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="drop-missing-values" class="level4">
+<h4 class="anchored" data-anchor-id="drop-missing-values">Drop missing values</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb27"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1"></a><span class="fu">dropmissing</span>(dat_missing)</span>
+<span id="cb27-2"><a href="#cb27-2"></a><span class="fu">dropmissing!</span>(dat_missing) <span class="co"># in place</span></span>
+<span id="cb27-3"><a href="#cb27-3"></a><span class="fu">dropmissing</span>(dat_missing, <span class="op">:</span>Population)</span>
+<span id="cb27-4"><a href="#cb27-4"></a><span class="fu">dropmissing</span>(dat_missing, [<span class="op">:</span>Population, <span class="op">:</span>Density])</span>
+<span id="cb27-5"><a href="#cb27-5"></a></span>
+<span id="cb27-6"><a href="#cb27-6"></a><span class="co"># if the column type still include missing values convert the array to non missing types</span></span>
+<span id="cb27-7"><a href="#cb27-7"></a><span class="fu">disallowmissing</span>(dat_missing)</span>
+<span id="cb27-8"><a href="#cb27-8"></a><span class="fu">disallowmissing</span>(dat_missing, <span class="op">:</span>Density)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="fu">na.omit</span>(dat_missing) </span>
+<span id="cb28-2"><a href="#cb28-2"></a>dat_missing <span class="ot">=</span> <span class="fu">na.omit</span>(dat_missing) </span>
+<span id="cb28-3"><a href="#cb28-3"></a></span>
+<span id="cb28-4"><a href="#cb28-4"></a>dat_missing[<span class="sc">!</span><span class="fu">is.na</span>(population)]</span>
+<span id="cb28-5"><a href="#cb28-5"></a>dat_missing[<span class="sc">!</span><span class="fu">is.na</span>(population) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(density)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="selecting-columns" class="level2">
+<h2 class="anchored" data-anchor-id="selecting-columns">Selecting columns</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb29"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1"></a><span class="co"># select columns</span></span>
+<span id="cb29-2"><a href="#cb29-2"></a><span class="fu">select</span>(dat, <span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>carrier)</span>
+<span id="cb29-3"><a href="#cb29-3"></a><span class="fu">select!</span>(dat, <span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>carrier)   <span class="co"># in place</span></span>
+<span id="cb29-4"><a href="#cb29-4"></a><span class="fu">select</span>(dat, <span class="st">"month"</span>, <span class="st">"day"</span>, <span class="st">"carrier"</span>) <span class="co"># also works</span></span>
+<span id="cb29-5"><a href="#cb29-5"></a><span class="fu">select</span>(dat, <span class="st">r"_delay"</span>)</span>
+<span id="cb29-6"><a href="#cb29-6"></a><span class="fu">select</span>(dat, .!(<span class="fu">eltype</span>.(<span class="fu">eachcol</span>(dat)) <span class="op">.&lt;:</span> <span class="dt">AbstractString</span>) )</span>
+<span id="cb29-7"><a href="#cb29-7"></a><span class="fu">select</span>(dat_missing, (<span class="fu">eltype</span>.(<span class="fu">eachcol</span>(dat_missing)) <span class="op">.&lt;:</span> <span class="dt">Union</span>{<span class="dt">Missing</span>, <span class="dt">Int</span>}) ) <span class="co"># if some columns include missing</span></span>
+<span id="cb29-8"><a href="#cb29-8"></a></span>
+<span id="cb29-9"><a href="#cb29-9"></a><span class="co"># removing select columns</span></span>
+<span id="cb29-10"><a href="#cb29-10"></a><span class="fu">select</span>(dat, <span class="fu">Not</span>([<span class="op">:</span>origin, <span class="op">:</span>dest]))</span>
+<span id="cb29-11"><a href="#cb29-11"></a><span class="fu">select!</span>(dat, <span class="fu">Not</span>([<span class="op">:</span>origin, <span class="op">:</span>dest])) <span class="co"># in place</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="co"># select columns</span></span>
+<span id="cb30-2"><a href="#cb30-2"></a>dat[, .(month, day, carrier)] </span>
+<span id="cb30-3"><a href="#cb30-3"></a>dat <span class="ot">=</span> dat[, .(month, day, carrier)] <span class="co"># "in place"</span></span>
+<span id="cb30-4"><a href="#cb30-4"></a>dat[, <span class="fu">c</span>(<span class="st">"month"</span>, <span class="st">"day"</span>, <span class="st">"carrier"</span>)] <span class="co"># same but programmatic</span></span>
+<span id="cb30-5"><a href="#cb30-5"></a>dat[, .SD, .SDcols<span class="ot">=</span><span class="fu">patterns</span>(<span class="st">"*_delay"</span>)] <span class="co"># keep columns by matching</span></span>
+<span id="cb30-6"><a href="#cb30-6"></a>dat[, .SD, .SDcols<span class="ot">=</span><span class="sc">!</span>is.character]       <span class="co"># keep columns by type</span></span>
+<span id="cb30-7"><a href="#cb30-7"></a></span>
+<span id="cb30-8"><a href="#cb30-8"></a></span>
+<span id="cb30-9"><a href="#cb30-9"></a><span class="co"># removing select columns</span></span>
+<span id="cb30-10"><a href="#cb30-10"></a>dat[, <span class="sc">-</span><span class="fu">c</span>(<span class="st">"origin"</span>, <span class="st">"dest"</span>)]</span>
+<span id="cb30-11"><a href="#cb30-11"></a>dat[, <span class="fu">c</span>(<span class="st">"origin"</span>, <span class="st">"dest"</span>) <span class="sc">:</span><span class="er">=</span> <span class="cn">NULL</span>] <span class="co"># same, but in-place </span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="rows-and-columns" class="level2">
+<h2 class="anchored" data-anchor-id="rows-and-columns">Rows and columns</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb31"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1"></a><span class="pp">@select</span>(<span class="pp">@rsubset</span>(dat, <span class="op">:</span>origin<span class="op">==</span><span class="st">"LGA"</span>), </span>
+<span id="cb31-2"><a href="#cb31-2"></a>    <span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>carrier)</span>
+<span id="cb31-3"><a href="#cb31-3"></a><span class="pp">@pipe</span> dat <span class="op">|&gt;</span> <span class="pp">@rsubset</span>(_, <span class="op">:</span>origin<span class="op">==</span><span class="st">"LGA"</span>) <span class="op">|&gt;</span> </span>
+<span id="cb31-4"><a href="#cb31-4"></a>    <span class="pp">@select</span>(_, <span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>carrier)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>dat[origin<span class="sc">==</span><span class="st">"LGA"</span>, .(month, day, carrier)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+<section id="creatingmodifying-variables" class="level1">
+<h1>Creating/modifying variables</h1>
+<section id="basic-operations" class="level2">
+<h2 class="anchored" data-anchor-id="basic-operations">Basic operations</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb33"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1"></a><span class="pp">@transform</span>!(dat, <span class="op">:</span>tot_delay <span class="op">=</span> <span class="op">:</span>dep_delay <span class="op">+</span> <span class="op">:</span>arr_delay)</span>
+<span id="cb33-2"><a href="#cb33-2"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>segment <span class="op">=</span> <span class="op">:</span>origin <span class="op">*</span> <span class="op">:</span>dest) <span class="co"># rowwise operation</span></span>
+<span id="cb33-3"><a href="#cb33-3"></a></span>
+<span id="cb33-4"><a href="#cb33-4"></a><span class="co"># Programmatic version</span></span>
+<span id="cb33-5"><a href="#cb33-5"></a>x <span class="op">=</span> <span class="st">"dep_delay"</span>; y <span class="op">=</span> <span class="st">"arr_delay"</span>; z <span class="op">=</span> <span class="st">"tot_delay"</span>;</span>
+<span id="cb33-6"><a href="#cb33-6"></a><span class="pp">@transform</span>!(dat, <span class="op">$</span>z <span class="op">=</span> <span class="op">$</span>x <span class="op">+</span> <span class="op">$</span>y)</span>
+<span id="cb33-7"><a href="#cb33-7"></a></span>
+<span id="cb33-8"><a href="#cb33-8"></a><span class="co"># Conditional modification </span></span>
+<span id="cb33-9"><a href="#cb33-9"></a>dat[dat.month<span class="op">.==</span><span class="fl">9</span>, <span class="op">:</span>distance] <span class="op">=</span> dat[dat.month<span class="op">.==</span><span class="fl">9</span>, <span class="op">:</span>distance] <span class="op">.+</span> <span class="fl">1</span>;</span>
+<span id="cb33-10"><a href="#cb33-10"></a>dat[<span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="op">:</span>air_time] <span class="op">.=</span> <span class="fl">0</span>;</span>
+<span id="cb33-11"><a href="#cb33-11"></a><span class="co"># Or with missing values</span></span>
+<span id="cb33-12"><a href="#cb33-12"></a>dat_missing[<span class="fu">isequal</span>.(dat_missing.Population, <span class="cn">missing</span>), <span class="op">:</span>City] <span class="op">.=</span> <span class="st">"NOPOP"</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a>dat[, tot_delay <span class="sc">:</span><span class="er">=</span> dep_delay <span class="sc">+</span> arr_delay] </span>
+<span id="cb34-2"><a href="#cb34-2"></a>dat[, segment <span class="sc">:</span><span class="er">=</span> <span class="fu">paste0</span>(origin, dest) ]</span>
+<span id="cb34-3"><a href="#cb34-3"></a></span>
+<span id="cb34-4"><a href="#cb34-4"></a><span class="co"># Programmatic version</span></span>
+<span id="cb34-5"><a href="#cb34-5"></a>x <span class="ot">=</span> <span class="st">"dep_delay"</span>; y <span class="ot">=</span> <span class="st">"arr_delay"</span>; z <span class="ot">=</span> <span class="st">"tot_delay"</span></span>
+<span id="cb34-6"><a href="#cb34-6"></a>dat[, <span class="fu">c</span>(z) <span class="sc">:</span><span class="er">=</span> <span class="fu">get</span>(x) <span class="sc">+</span> <span class="fu">get</span>(y) ]</span>
+<span id="cb34-7"><a href="#cb34-7"></a></span>
+<span id="cb34-8"><a href="#cb34-8"></a><span class="co"># Conditional modification </span></span>
+<span id="cb34-9"><a href="#cb34-9"></a>dat[month<span class="sc">==</span><span class="dv">9</span>, distance <span class="sc">:</span><span class="er">=</span> distance <span class="sc">+</span> <span class="dv">1</span>]</span>
+<span id="cb34-10"><a href="#cb34-10"></a>dat[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, origin <span class="sc">:</span><span class="er">=</span> <span class="st">"OBS"</span>]</span>
+<span id="cb34-11"><a href="#cb34-11"></a><span class="co"># Or with missing values</span></span>
+<span id="cb34-12"><a href="#cb34-12"></a>dat_missing[<span class="fu">is.na</span>(population), City <span class="sc">:</span><span class="er">=</span> <span class="st">"NOPOP"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="grouped-operations" class="level2">
+<h2 class="anchored" data-anchor-id="grouped-operations">Grouped operations</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb35"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1"></a><span class="pp">@pipe</span> dat <span class="op">|&gt;</span> <span class="fu">groupby</span>(_, <span class="op">:</span>carrier) <span class="op">|&gt;</span> </span>
+<span id="cb35-2"><a href="#cb35-2"></a>    <span class="pp">@transform</span>!(_, <span class="op">:</span>avg_arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay)) <span class="co"># in place</span></span>
+<span id="cb35-3"><a href="#cb35-3"></a><span class="pp">@pipe</span> dat <span class="op">|&gt;</span> <span class="fu">groupby</span>(_, <span class="op">:</span>carrier) <span class="op">|&gt;</span> </span>
+<span id="cb35-4"><a href="#cb35-4"></a>    <span class="pp">@combine</span>(_, <span class="op">:</span>avg_arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb36"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1"></a>dat[, avg_arr_delay <span class="sc">:</span><span class="er">=</span> <span class="fu">mean</span>(arr_delay), by<span class="ot">=</span>carrier] </span>
+<span id="cb36-2"><a href="#cb36-2"></a></span>
+<span id="cb36-3"><a href="#cb36-3"></a>dat[, .(<span class="at">avg_arr_delay =</span> <span class="fu">mean</span>(arr_delay, <span class="at">na.rm=</span>T)), by<span class="ot">=</span>carrier]  <span class="co"># collapse see aggregation section below</span></span>
+<span id="cb36-4"><a href="#cb36-4"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="leads-and-lags" class="level2">
+<h2 class="anchored" data-anchor-id="leads-and-lags">Leads and lags</h2>
+<section id="standard-leads-and-lags" class="level4">
+<h4 class="anchored" data-anchor-id="standard-leads-and-lags">Standard leads and lags</h4>
+<p>I work with shifts on dates here but the dataset is a full panel with consecutive dates so there is nothing special about the dates variable per-se. <em>It is easier to see this on a smaller dataset. So I aggregate the data to get the total monthly flights out of each origin airport (see last section).</em></p>
+<div class="grid">
+<div class="g-col-6">
+<p>For leads and lags on arrays, I use the <code>ShiftedArrays</code> package which works fine for standard operations (read: as long as you are not dealing with dates).</p>
+</div>
+<div class="g-col-6">
+<p>For standard leads and lags, it is faster to use the built-in <code>shift</code> function from data.table.</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb37"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb37-1"><a href="#cb37-1"></a>dat_shift <span class="op">=</span> <span class="fu">combine</span>(</span>
+<span id="cb37-2"><a href="#cb37-2"></a>    <span class="fu">groupby</span>(dat, [<span class="op">:</span>origin, <span class="op">:</span>month]), </span>
+<span id="cb37-3"><a href="#cb37-3"></a>    nrow <span class="op">=&gt;</span> <span class="op">:</span>N)</span>
+<span id="cb37-4"><a href="#cb37-4"></a><span class="fu">sort!</span>(dat_shift, [<span class="op">:</span>origin, <span class="op">:</span>month])    </span>
+<span id="cb37-5"><a href="#cb37-5"></a></span>
+<span id="cb37-6"><a href="#cb37-6"></a><span class="pp">@transform</span>!(<span class="fu">groupby</span>(dat_shift, <span class="op">:</span>origin), </span>
+<span id="cb37-7"><a href="#cb37-7"></a>    <span class="op">:</span>growth <span class="op">=</span> <span class="op">:</span>N <span class="op">./</span> ShiftedArrays.<span class="fu">lag</span>(<span class="op">:</span>N, <span class="fl">1</span>))</span>
+<span id="cb37-8"><a href="#cb37-8"></a><span class="pp">@transform</span>!(<span class="fu">groupby</span>(dat_shift, <span class="op">:</span>origin), </span>
+<span id="cb37-9"><a href="#cb37-9"></a>    <span class="op">:</span>growth_since_first <span class="op">=</span> <span class="op">:</span>N <span class="op">./</span> <span class="op">:</span>N[<span class="fl">1</span>] )</span>
+<span id="cb37-10"><a href="#cb37-10"></a></span>
+<span id="cb37-11"><a href="#cb37-11"></a><span class="co"># The following is probably not optimal; here are two versions</span></span>
+<span id="cb37-12"><a href="#cb37-12"></a><span class="pp">@pipe</span> dat_shift <span class="op">|&gt;</span> </span>
+<span id="cb37-13"><a href="#cb37-13"></a>    <span class="fu">groupby</span>(_, <span class="op">:</span>origin) <span class="op">|&gt;</span> <span class="pp">@subset</span>(_, <span class="fl">5</span> <span class="op">∈</span> <span class="op">:</span>month) <span class="op">|&gt;</span>  <span class="co"># this errors if month 5 is missing in a group</span></span>
+<span id="cb37-14"><a href="#cb37-14"></a>    <span class="fu">groupby</span>(_, <span class="op">:</span>origin) <span class="op">|&gt;</span> <span class="pp">@transform</span>(_, <span class="op">:</span>growth_since_may <span class="op">=</span> <span class="op">:</span>N <span class="op">./</span> <span class="op">:</span>N[<span class="op">:</span>month<span class="op">.==</span><span class="fl">5</span>])</span>
+<span id="cb37-15"><a href="#cb37-15"></a><span class="cf">for</span> subdf <span class="kw">in</span> <span class="fu">groupby</span>(dat_shift, <span class="op">:</span>origin)    </span>
+<span id="cb37-16"><a href="#cb37-16"></a>    <span class="cf">if</span> <span class="fl">5</span> <span class="op">∈</span> subdf.month</span>
+<span id="cb37-17"><a href="#cb37-17"></a>        <span class="pp">@transform</span>!(subdf, <span class="op">:</span>growth_since_may <span class="op">=</span> <span class="op">:</span>N <span class="op">./</span> <span class="op">:</span>N[<span class="op">:</span>month<span class="op">.==</span><span class="fl">5</span>])</span>
+<span id="cb37-18"><a href="#cb37-18"></a>    <span class="cf">end</span></span>
+<span id="cb37-19"><a href="#cb37-19"></a><span class="cf">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>dat_shift <span class="ot">=</span> dat[, .N, by <span class="ot">=</span> .(origin, month)]</span>
+<span id="cb38-2"><a href="#cb38-2"></a><span class="fu">setorder</span>(dat_shift, origin, month)</span>
+<span id="cb38-3"><a href="#cb38-3"></a></span>
+<span id="cb38-4"><a href="#cb38-4"></a></span>
+<span id="cb38-5"><a href="#cb38-5"></a></span>
+<span id="cb38-6"><a href="#cb38-6"></a>dat_shift[, growth <span class="sc">:</span><span class="er">=</span> N<span class="sc">/</span><span class="fu">shift</span>(N, <span class="dv">1</span>), by <span class="ot">=</span> origin]</span>
+<span id="cb38-7"><a href="#cb38-7"></a></span>
+<span id="cb38-8"><a href="#cb38-8"></a>dat_shift[, growth_since_first <span class="sc">:</span><span class="er">=</span> N<span class="sc">/</span>N[<span class="dv">1</span>], by <span class="ot">=</span> origin] </span>
+<span id="cb38-9"><a href="#cb38-9"></a></span>
+<span id="cb38-10"><a href="#cb38-10"></a>dat_shift[, growth_since_may <span class="sc">:</span><span class="er">=</span> N<span class="sc">/</span>N[month<span class="sc">==</span><span class="dv">5</span>], by <span class="ot">=</span> origin]</span>
+<span id="cb38-11"><a href="#cb38-11"></a>dat_shift[, growth_since_may <span class="sc">:</span><span class="er">=</span> .SD[[<span class="st">"N"</span>]]<span class="sc">/</span>.SD[month<span class="sc">==</span><span class="dv">5</span>][[<span class="st">"N"</span>]], </span>
+<span id="cb38-12"><a href="#cb38-12"></a>    .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"N"</span>, <span class="st">"month"</span>), by <span class="ot">=</span> origin]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="the-case-of-dates" class="level4">
+<h4 class="anchored" data-anchor-id="the-case-of-dates">The case of dates</h4>
+<p>Dates are messy (imho). Lagging a variable by three months in a monthly panel does not necessarily translate into shifting the data by 3 indices (if the panel is unbalanced for example). The correct date function should check that “shifting” by three months in April corresponds to January and not December (if January is missing).</p>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb39"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>date <span class="op">=</span> <span class="fu">Date</span>(<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>day) )</span>
+<span id="cb39-2"><a href="#cb39-2"></a></span>
+<span id="cb39-3"><a href="#cb39-3"></a></span>
+<span id="cb39-4"><a href="#cb39-4"></a><span class="co"># Including time</span></span>
+<span id="cb39-5"><a href="#cb39-5"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>date_time <span class="op">=</span> <span class="fu">DateTime</span>(<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>day, <span class="op">:</span>hour) )</span>
+<span id="cb39-6"><a href="#cb39-6"></a></span>
+<span id="cb39-7"><a href="#cb39-7"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>date_y <span class="op">=</span> <span class="fu">year</span>(<span class="op">:</span>date))</span>
+<span id="cb39-8"><a href="#cb39-8"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>f7d_date <span class="op">=</span> <span class="op">:</span>date <span class="op">+</span> <span class="bu">Dates</span>.<span class="fu">Day</span>(<span class="fl">7</span>))</span>
+<span id="cb39-9"><a href="#cb39-9"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>l3m_date <span class="op">=</span> <span class="op">:</span>date <span class="op">-</span> <span class="bu">Dates</span>.<span class="fu">Month</span>(<span class="fl">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb40"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1"></a><span class="co"># Make a date variable using data.table built-in IDate</span></span>
+<span id="cb40-2"><a href="#cb40-2"></a>dat[, date <span class="sc">:</span><span class="er">=</span> <span class="fu">as.IDate</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">'-'</span>))] </span>
+<span id="cb40-3"><a href="#cb40-3"></a><span class="co"># It is usually faster to use lubridate parser </span></span>
+<span id="cb40-4"><a href="#cb40-4"></a>dat[, date <span class="sc">:</span><span class="er">=</span> <span class="fu">parse_date_time2</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">'-'</span>), <span class="st">"Y-m-d"</span>)]</span>
+<span id="cb40-5"><a href="#cb40-5"></a>dat[, date_time <span class="sc">:</span><span class="er">=</span> <span class="fu">parse_date_time2</span>(<span class="fu">paste</span>(year, month, day, hour, <span class="at">sep=</span><span class="st">'-'</span>), <span class="st">"Y-m-d-H"</span>)]</span>
+<span id="cb40-6"><a href="#cb40-6"></a></span>
+<span id="cb40-7"><a href="#cb40-7"></a>dat[, date_y <span class="sc">:</span><span class="er">=</span> <span class="fu">year</span>(date)] <span class="co"># extract year</span></span>
+<span id="cb40-8"><a href="#cb40-8"></a>dat[, f7d_date <span class="sc">:</span><span class="er">=</span> date <span class="sc">+</span> <span class="fu">days</span>(<span class="dv">7</span>) ]   <span class="co"># date in 7 days</span></span>
+<span id="cb40-9"><a href="#cb40-9"></a>dat[, l3m_date <span class="sc">:</span><span class="er">=</span> date <span class="sc">-</span> <span class="fu">months</span>(<span class="dv">3</span>) ] <span class="co"># date three months ago</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<p>Once we know how to lag dates, we would like to answer questions such as: <em>what was the average flight delay for each origin airport three months ago compared to today?</em> We will work with the aggregate delays by origins.</p>
+<div class="grid">
+<div class="g-col-6">
+<p>In julia, the <code>ShiftedArrays</code> package does not support dates (See this post on <a href="https://discourse.julialang.org/t/ann-shiftedarrays-and-support-for-shiftedarrays-in-groupederrors/9162/2?u=piever">discourse</a> and this <a href="https://github.com/JuliaArrays/ShiftedArrays.jl/pull/37#issuecomment-623647440">issue</a>)</p>
+<p>This is one of the most <em>annoying</em> thing when working with dates and panel data in julia. I have found that <code>PanelShift.jl</code> solves the problem but it is still in version <code>0.1.1</code> and it is unclear how many updates it is receiving. What is nice with julia is that you can simply loop over the data and do exactly what you want to do.</p>
+</div>
+<div class="g-col-6">
+<p>In R, I use the utility <code>tlag</code> and <code>tlead</code> from <code>statar</code> which lags based on date intervals.</p>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb41"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>date <span class="op">=</span> <span class="fu">Date</span>(<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>day) )</span>
+<span id="cb41-2"><a href="#cb41-2"></a>dat_shift <span class="op">=</span> <span class="pp">@combine</span>(<span class="fu">groupby</span>(dat, [<span class="op">:</span>origin, <span class="op">:</span>date]), <span class="op">:</span>arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay) )</span>
+<span id="cb41-3"><a href="#cb41-3"></a></span>
+<span id="cb41-4"><a href="#cb41-4"></a><span class="co"># I could not find a built-in function, but julia is amenable to loops</span></span>
+<span id="cb41-5"><a href="#cb41-5"></a>dat_shift.l3m_arr_delay <span class="op">=</span> <span class="fu">Array</span><span class="dt">{Union{Missing,Float64}}</span>(<span class="cn">undef</span>, <span class="fu">nrow</span>(dat_shift));</span>
+<span id="cb41-6"><a href="#cb41-6"></a><span class="cf">for</span> subdf <span class="kw">in</span> <span class="fu">groupby</span>(dat_shift, <span class="op">:</span>origin)    </span>
+<span id="cb41-7"><a href="#cb41-7"></a>    <span class="cf">for</span> date_iter <span class="kw">in</span> subdf.date</span>
+<span id="cb41-8"><a href="#cb41-8"></a>           idx <span class="op">=</span> <span class="fu">isequal</span>.(subdf.date, date_iter <span class="op">-</span> <span class="bu">Dates</span>.<span class="fu">Month</span>(<span class="fl">3</span>))</span>
+<span id="cb41-9"><a href="#cb41-9"></a>        <span class="cf">if</span> (<span class="fu">sum</span>(idx)<span class="op">==</span><span class="fl">1</span>)</span>
+<span id="cb41-10"><a href="#cb41-10"></a>            subdf[ subdf.date <span class="op">.==</span> date_iter, <span class="op">:</span>l3m_arr_delay] <span class="op">.=</span> subdf[idx, <span class="op">:</span>arr_delay]</span>
+<span id="cb41-11"><a href="#cb41-11"></a>        <span class="cf">end</span></span>
+<span id="cb41-12"><a href="#cb41-12"></a>    <span class="cf">end</span></span>
+<span id="cb41-13"><a href="#cb41-13"></a><span class="cf">end</span></span>
+<span id="cb41-14"><a href="#cb41-14"></a><span class="co"># sort(dat_shift, [:origin, :date])</span></span>
+<span id="cb41-15"><a href="#cb41-15"></a></span>
+<span id="cb41-16"><a href="#cb41-16"></a><span class="co"># using PanelShift</span></span>
+<span id="cb41-17"><a href="#cb41-17"></a><span class="pp">@transform</span>!(<span class="fu">groupby</span>(dat_shift, <span class="op">:</span>origin),</span>
+<span id="cb41-18"><a href="#cb41-18"></a>    <span class="op">:</span>l3m_arr_delay <span class="op">=</span> <span class="fu">tlag</span>(<span class="op">:</span>date, <span class="op">:</span>arr_delay, <span class="fu">Month</span>(<span class="fl">3</span>) ) )</span>
+<span id="cb41-19"><a href="#cb41-19"></a><span class="fu">panellag!</span>(dat_shift, <span class="op">:</span>origin, <span class="op">:</span>date, </span>
+<span id="cb41-20"><a href="#cb41-20"></a>    <span class="op">:</span>arr_delay, <span class="op">:</span>l3m_arr_delay, <span class="fu">Month</span>(<span class="fl">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a>dat_shift <span class="ot">=</span> dat[, .(<span class="at">arr_delay =</span> <span class="fu">mean</span>(arr_delay, <span class="at">na.rm=</span>T)), </span>
+<span id="cb42-2"><a href="#cb42-2"></a>    by <span class="ot">=</span> .(origin, <span class="at">date=</span><span class="fu">parse_date_time2</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">"-""), "</span>Y<span class="sc">-</span>m<span class="sc">-</span>d<span class="st">"))]</span></span>
+<span id="cb42-3"><a href="#cb42-3"></a></span>
+<span id="cb42-4"><a href="#cb42-4"></a><span class="st">dat_shift[, l3m_arr_delay := tlag(arr_delay, n=months(3), time=date), by = .(origin) ]</span></span>
+<span id="cb42-5"><a href="#cb42-5"></a><span class="st"># setorder(dat_shift, origin, date)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+</section>
+<section id="advanced-examples" class="level2">
+<h2 class="anchored" data-anchor-id="advanced-examples">Advanced examples</h2>
+<section id="applying-functions-to-multiple-variables" class="level4">
+<h4 class="anchored" data-anchor-id="applying-functions-to-multiple-variables">Applying functions to multiple variables</h4>
+<div class="grid">
+<div class="g-col-6">
+
+</div>
+<div class="g-col-6">
+<ul>
+<li>Loops: if you have to use loops for convenience, data.table provides <code>set</code> which allows to change values withouth the overhead of data.table. The syntax is of the form <code>set(dat, i, j,value)</code>, where <code>i</code> is the row index, and <code>j</code> the column index (or name).</li>
+</ul>
+</div>
+</div>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb43"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb43-1"><a href="#cb43-1"></a><span class="co"># Loops</span></span>
+<span id="cb43-2"><a href="#cb43-2"></a><span class="cf">for</span> col <span class="kw">in</span> (<span class="op">:</span>tot_delay, <span class="op">:</span>dep_delay) </span>
+<span id="cb43-3"><a href="#cb43-3"></a>    dat[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, col] <span class="op">=</span> <span class="op">-</span> dat[<span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, col]</span>
+<span id="cb43-4"><a href="#cb43-4"></a><span class="cf">end</span></span>
+<span id="cb43-5"><a href="#cb43-5"></a></span>
+<span id="cb43-6"><a href="#cb43-6"></a><span class="co"># Control flows </span></span>
+<span id="cb43-7"><a href="#cb43-7"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>arr_delay_penaly <span class="op">=</span> <span class="fu">ifelse</span>(<span class="op">:</span>arr_delay<span class="op">&gt;</span><span class="fl">12</span>, <span class="fl">1</span>, <span class="op">-</span><span class="fl">1</span>) )</span>
+<span id="cb43-8"><a href="#cb43-8"></a><span class="pp">@rtransform</span>!(dat, <span class="op">:</span>arr_delay_penaly <span class="op">=</span> <span class="fu">ifelse</span>( <span class="co"># no case function in julia</span></span>
+<span id="cb43-9"><a href="#cb43-9"></a>    <span class="op">:</span>arr_delay<span class="op">&gt;=</span><span class="fl">15</span>, <span class="fl">3</span>, </span>
+<span id="cb43-10"><a href="#cb43-10"></a>    <span class="fu">ifelse</span>(<span class="op">:</span>arr_delay<span class="op">&gt;=</span><span class="fl">6</span>, <span class="fl">2</span>, </span>
+<span id="cb43-11"><a href="#cb43-11"></a>    <span class="fu">ifelse</span>(<span class="op">:</span>arr_delay<span class="op">&gt;=</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span>) ) ) )     </span>
+<span id="cb43-12"><a href="#cb43-12"></a></span>
+<span id="cb43-13"><a href="#cb43-13"></a><span class="co"># Modify multiple variables at the same time (same function)</span></span>
+<span id="cb43-14"><a href="#cb43-14"></a>cols <span class="op">=</span> [<span class="op">:</span>origin, <span class="op">:</span>dest]</span>
+<span id="cb43-15"><a href="#cb43-15"></a><span class="fu">transform!</span>(dat, cols <span class="op">.=&gt;</span> (x <span class="op">-&gt;</span> x <span class="op">.*</span> <span class="st">"Airport"</span>) <span class="op">.=&gt;</span> cols)</span>
+<span id="cb43-16"><a href="#cb43-16"></a></span>
+<span id="cb43-17"><a href="#cb43-17"></a></span>
+<span id="cb43-18"><a href="#cb43-18"></a><span class="co"># Function of multiple variables (by rows)</span></span>
+<span id="cb43-19"><a href="#cb43-19"></a><span class="fu">ratio_airtime</span>(x<span class="op">::</span><span class="dt">NamedTuple</span>) <span class="op">=</span> (x[<span class="fl">1</span>] <span class="op">/</span>(x[<span class="fl">1</span>]<span class="op">+</span>x[<span class="fl">2</span>]))</span>
+<span id="cb43-20"><a href="#cb43-20"></a><span class="pp">@rtransform</span>! dat <span class="op">:</span>frac_air <span class="op">=</span> <span class="fu">ratio_airtime</span>(<span class="fu">AsTable</span>([<span class="op">:</span>air_time, <span class="op">:</span>tot_delay]))</span>
+<span id="cb43-21"><a href="#cb43-21"></a><span class="fu">ratio_airtime</span>(x, y) <span class="op">=</span> (x <span class="op">/</span>(x<span class="op">+</span>y))</span>
+<span id="cb43-22"><a href="#cb43-22"></a><span class="fu">transform</span>(dat, [<span class="op">:</span>air_time, <span class="op">:</span>tot_delay] <span class="op">=&gt;</span> <span class="fu">ByRow</span>((ratio_airtime)) <span class="op">=&gt;</span> <span class="op">:</span>frac_air)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="co"># Loops</span></span>
+<span id="cb44-2"><a href="#cb44-2"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"tot_delay"</span>, <span class="st">"dep_delay"</span>)){ <span class="co"># (faster) loops </span></span>
+<span id="cb44-3"><a href="#cb44-3"></a>    <span class="fu">set</span>(dat, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">j=</span>j, <span class="at">value=</span><span class="sc">-</span>dat[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>][[j]])</span>
+<span id="cb44-4"><a href="#cb44-4"></a>}</span>
+<span id="cb44-5"><a href="#cb44-5"></a></span>
+<span id="cb44-6"><a href="#cb44-6"></a><span class="co"># Control flows </span></span>
+<span id="cb44-7"><a href="#cb44-7"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fifelse</span>(arr_delay<span class="sc">&gt;</span><span class="dv">12</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>) ]</span>
+<span id="cb44-8"><a href="#cb44-8"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fcase</span>(arr_delay<span class="sc">&gt;=</span><span class="dv">15</span>, <span class="dv">3</span>, </span>
+<span id="cb44-9"><a href="#cb44-9"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">6</span>,  <span class="dv">2</span>,</span>
+<span id="cb44-10"><a href="#cb44-10"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">0</span>,  <span class="dv">1</span>,</span>
+<span id="cb44-11"><a href="#cb44-11"></a>                                <span class="at">default =</span> <span class="dv">0</span>) ]</span>
+<span id="cb44-12"><a href="#cb44-12"></a></span>
+<span id="cb44-13"><a href="#cb44-13"></a><span class="co"># Modify multiple variables at the same time</span></span>
+<span id="cb44-14"><a href="#cb44-14"></a>cols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"origin"</span>, <span class="st">"dest"</span>)</span>
+<span id="cb44-15"><a href="#cb44-15"></a>dat[, (cols) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(.SD, \(x) <span class="fu">paste</span>(x,<span class="st">"Airport"</span>)), </span>
+<span id="cb44-16"><a href="#cb44-16"></a>    .SDcols <span class="ot">=</span> cols]   </span>
+<span id="cb44-17"><a href="#cb44-17"></a></span>
+<span id="cb44-18"><a href="#cb44-18"></a><span class="co"># Function of multiple variables </span></span>
+<span id="cb44-19"><a href="#cb44-19"></a>dat[, tot_delay <span class="sc">:</span><span class="er">=</span> <span class="fu">rowSums</span>(.SD), .SDcols<span class="ot">=</span><span class="fu">patterns</span>(<span class="st">'*_delay'</span>)]</span>
+<span id="cb44-20"><a href="#cb44-20"></a>ratio_airtime <span class="ot">=</span> <span class="cf">function</span>(air, tot)  (air <span class="sc">/</span>(air<span class="sc">+</span>tot))</span>
+<span id="cb44-21"><a href="#cb44-21"></a><span class="co"># dat[, frac_air := ratio_airtime(air_time, tot_delay) ]</span></span>
+<span id="cb44-22"><a href="#cb44-22"></a>dat[, frac_air <span class="sc">:</span><span class="er">=</span> <span class="fu">ratio_airtime</span>(air_time, tot_delay), by<span class="ot">=</span>.I] <span class="co"># row-wise operation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="applying-complex-functions" class="level4">
+<h4 class="anchored" data-anchor-id="applying-complex-functions">Applying complex functions</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb45"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Regressions by groups</span></span>
+<span id="cb45-2"><a href="#cb45-2"></a><span class="co"># using FixedEffectModels</span></span>
+<span id="cb45-3"><a href="#cb45-3"></a><span class="cf">for</span> subdf <span class="kw">in</span> <span class="fu">groupby</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month])</span>
+<span id="cb45-4"><a href="#cb45-4"></a>    reg_res <span class="op">=</span> <span class="fu">reg</span>(subdf, <span class="pp">@formula</span>(tot_delay <span class="op">~</span> air_time))</span>
+<span id="cb45-5"><a href="#cb45-5"></a>    subdf[<span class="op">:</span>, <span class="op">:</span>β] <span class="op">.=</span> <span class="fu">coef</span>(reg_res)[<span class="fl">2</span>]</span>
+<span id="cb45-6"><a href="#cb45-6"></a>    subdf[<span class="op">:</span> , <span class="op">:</span>σ] <span class="op">.=</span> <span class="fu">sqrt</span>.(<span class="fu">vcov</span>(reg_res)[<span class="fl">2</span>,<span class="fl">2</span>])</span>
+<span id="cb45-7"><a href="#cb45-7"></a><span class="cf">end</span></span>
+<span id="cb45-8"><a href="#cb45-8"></a><span class="fu">select</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>β, <span class="op">:</span>σ]) <span class="op">|&gt;</span> unique</span>
+<span id="cb45-9"><a href="#cb45-9"></a></span>
+<span id="cb45-10"><a href="#cb45-10"></a></span>
+<span id="cb45-11"><a href="#cb45-11"></a></span>
+<span id="cb45-12"><a href="#cb45-12"></a></span>
+<span id="cb45-13"><a href="#cb45-13"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="co"># Regressions by groups</span></span>
+<span id="cb46-2"><a href="#cb46-2"></a>dat_reg <span class="ot">=</span> dat[, .(</span>
+<span id="cb46-3"><a href="#cb46-3"></a>    {</span>
+<span id="cb46-4"><a href="#cb46-4"></a>        y <span class="ot">=</span> <span class="fu">as.matrix</span>(.SD[[<span class="st">"tot_delay"</span>]]) </span>
+<span id="cb46-5"><a href="#cb46-5"></a>        x <span class="ot">=</span> <span class="fu">as.matrix</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, .SD[[<span class="st">"air_time"</span>]]) )</span>
+<span id="cb46-6"><a href="#cb46-6"></a>        reg_res <span class="ot">=</span> <span class="fu">lm.fit</span>(x, y)</span>
+<span id="cb46-7"><a href="#cb46-7"></a>        b <span class="ot">=</span> <span class="fu">coefficients</span>(reg_res)[<span class="dv">2</span>]</span>
+<span id="cb46-8"><a href="#cb46-8"></a>        se <span class="ot">=</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(reg_res[[<span class="st">"residuals"</span>]]<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">var</span>(.SD[[<span class="st">"air_time"</span>]]) ) <span class="sc">/</span> .N</span>
+<span id="cb46-9"><a href="#cb46-9"></a>        <span class="fu">c</span>(b,se)</span>
+<span id="cb46-10"><a href="#cb46-10"></a>    }, </span>
+<span id="cb46-11"><a href="#cb46-11"></a>    <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">2</span>) ),</span>
+<span id="cb46-12"><a href="#cb46-12"></a>    by <span class="ot">=</span> .(year, month) ]</span>
+<span id="cb46-13"><a href="#cb46-13"></a><span class="fu">dcast</span>(dat_reg, year <span class="sc">+</span> month <span class="sc">~</span> V2, <span class="at">value.var=</span><span class="st">"V1"</span>) <span class="co"># anticipating on reshape section</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+</section>
+<section id="aggregating" class="level1">
+<h1>Aggregating</h1>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb47"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb47-1"><a href="#cb47-1"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay))</span>
+<span id="cb47-2"><a href="#cb47-2"></a></span>
+<span id="cb47-3"><a href="#cb47-3"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay), <span class="op">:</span>mean_arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay))</span>
+<span id="cb47-4"><a href="#cb47-4"></a><span class="fu">combine</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean <span class="op">.=&gt;</span> [<span class="op">:</span>mean_dep_delay, <span class="op">:</span>mean_arr_elay])</span>
+<span id="cb47-5"><a href="#cb47-5"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>AsTable <span class="op">=</span> <span class="fu">mean</span>.([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay]))</span>
+<span id="cb47-6"><a href="#cb47-6"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a>dat[, <span class="fu">mean</span>(dep_delay)] <span class="co"># returns a scalar</span></span>
+<span id="cb48-2"><a href="#cb48-2"></a>dat[, .(<span class="at">mean_ddel =</span> <span class="fu">mean</span>(dep_delay))] <span class="co"># returns a data.table</span></span>
+<span id="cb48-3"><a href="#cb48-3"></a>dat[, .(<span class="at">mean_ddel=</span><span class="fu">mean</span>(dep_delay), <span class="at">mean_adel=</span><span class="fu">mean</span>(arr_delay))]</span>
+<span id="cb48-4"><a href="#cb48-4"></a>dat[, <span class="fu">lapply</span>(.SD, mean), .SDcols<span class="ot">=</span><span class="fu">c</span>(<span class="st">'arr_delay'</span>,<span class="st">'dep_delay'</span>)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+<section id="reshape" class="level1">
+<h1>Reshape</h1>
+<section id="wide-to-long" class="level4">
+<h4 class="anchored" data-anchor-id="wide-to-long">Wide to long</h4>
+<div class="grid">
+<div class="g-col-6">
+<p>Julia uses <code>stack</code> for going from wide to long.</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb49-1"><a href="#cb49-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
+<span id="cb49-2"><a href="#cb49-2"></a><span class="pp">@transform</span>!(dat, <span class="op">:</span>uid <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu">nrow</span>(dat))</span>
+<span id="cb49-3"><a href="#cb49-3"></a><span class="fu">stack</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] )</span>
+<span id="cb49-4"><a href="#cb49-4"></a><span class="fu">stack</span>(dat, <span class="st">r"_delay"</span>)</span>
+<span id="cb49-5"><a href="#cb49-5"></a>dat_long <span class="op">=</span> <span class="fu">stack</span>(dat, </span>
+<span id="cb49-6"><a href="#cb49-6"></a>    [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay], </span>
+<span id="cb49-7"><a href="#cb49-7"></a>    [<span class="op">:</span>uid, <span class="op">:</span>carrier, <span class="op">:</span>origin, <span class="op">:</span>dest])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<p>In data.table, we use the built-in tool <code>melt</code> for going from wide to long.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
+<span id="cb50-2"><a href="#cb50-2"></a>dat[, uid <span class="sc">:</span><span class="er">=</span> <span class="fu">seq</span>(<span class="dv">1</span>, .N) ]</span>
+<span id="cb50-3"><a href="#cb50-3"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>))</span>
+<span id="cb50-4"><a href="#cb50-4"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">patterns</span>(<span class="st">'_delay'</span>))</span>
+<span id="cb50-5"><a href="#cb50-5"></a>dat_long <span class="ot">=</span> <span class="fu">melt</span>(dat, </span>
+<span id="cb50-6"><a href="#cb50-6"></a>    <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>),</span>
+<span id="cb50-7"><a href="#cb50-7"></a>    <span class="at">id.vars=</span><span class="fu">c</span>(<span class="st">"uid"</span>, <span class="st">"carrier"</span>, <span class="st">"origin"</span>, <span class="st">"dest"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="long-to-wide" class="level4">
+<h4 class="anchored" data-anchor-id="long-to-wide">Long to wide</h4>
+<div class="grid">
+<div class="g-col-6">
+<p>Julia uses <code>unstack</code> for going from long to wide.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb51-1"><a href="#cb51-1"></a><span class="co"># We start with the long data from above</span></span>
+<span id="cb51-2"><a href="#cb51-2"></a>dat_wide <span class="op">=</span> <span class="fu">unstack</span>(dat_long)</span>
+<span id="cb51-3"><a href="#cb51-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
+<span id="cb51-4"><a href="#cb51-4"></a><span class="fu">unstack</span>(dat_long, <span class="op">:</span>uid, <span class="op">:</span>variable, <span class="op">:</span>value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<p>In data.table, we use the built-in tool <code>dcast</code> for going from long to wide.</p>
+<div class="sourceCode" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># We start with the long data from above</span></span>
+<span id="cb52-2"><a href="#cb52-2"></a>dat_wide <span class="ot">=</span> <span class="fu">dcast</span>(dat_long, ... <span class="sc">~</span> variable)</span>
+<span id="cb52-3"><a href="#cb52-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
+<span id="cb52-4"><a href="#cb52-4"></a><span class="fu">dcast</span>(dat_long, uid <span class="sc">~</span> variable)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+<!-- ----------------------------------------------------------------------------------- -->
+</section>
+</section>
+<section id="merge" class="level1">
+<h1>Merge</h1>
+<section id="basic-merge" class="level2">
+<h2 class="anchored" data-anchor-id="basic-merge">Basic merge</h2>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb53"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb53-1"><a href="#cb53-1"></a><span class="co"># Load second dataset</span></span>
+<span id="cb53-2"><a href="#cb53-2"></a>dat_airports <span class="op">=</span> CSV.<span class="fu">read</span>(</span>
+<span id="cb53-3"><a href="#cb53-3"></a>    HTTP.<span class="fu">get</span>(<span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>).body,</span>
+<span id="cb53-4"><a href="#cb53-4"></a>    DataFrame) </span>
+<span id="cb53-5"><a href="#cb53-5"></a></span>
+<span id="cb53-6"><a href="#cb53-6"></a><span class="co"># Inner join</span></span>
+<span id="cb53-7"><a href="#cb53-7"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest <span class="op">=&gt;</span> <span class="op">:</span>faa)</span>
+<span id="cb53-8"><a href="#cb53-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
+<span id="cb53-9"><a href="#cb53-9"></a><span class="pp">@rename</span>!(dat_airports, <span class="op">:</span>dest <span class="op">=</span> <span class="op">:</span>faa)</span>
+<span id="cb53-10"><a href="#cb53-10"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-11"><a href="#cb53-11"></a></span>
+<span id="cb53-12"><a href="#cb53-12"></a><span class="co"># with missing values</span></span>
+<span id="cb53-13"><a href="#cb53-13"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest; matchmissing<span class="op">=:</span>equal)</span>
+<span id="cb53-14"><a href="#cb53-14"></a></span>
+<span id="cb53-15"><a href="#cb53-15"></a><span class="co"># Other types of merge</span></span>
+<span id="cb53-16"><a href="#cb53-16"></a><span class="co"># Left join</span></span>
+<span id="cb53-17"><a href="#cb53-17"></a><span class="fu">leftjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-18"><a href="#cb53-18"></a><span class="fu">leftjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest, source<span class="op">=</span><span class="st">"_merge"</span>) <span class="co"># stata style merge info</span></span>
+<span id="cb53-19"><a href="#cb53-19"></a><span class="co"># Right join</span></span>
+<span id="cb53-20"><a href="#cb53-20"></a><span class="fu">rightjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-21"><a href="#cb53-21"></a><span class="co"># Outer join</span></span>
+<span id="cb53-22"><a href="#cb53-22"></a><span class="fu">outerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-23"><a href="#cb53-23"></a><span class="co"># Semi join (filtering)</span></span>
+<span id="cb53-24"><a href="#cb53-24"></a><span class="fu">semijoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-25"><a href="#cb53-25"></a><span class="co"># Anti join</span></span>
+<span id="cb53-26"><a href="#cb53-26"></a><span class="fu">antijoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
+<span id="cb53-27"><a href="#cb53-27"></a><span class="co"># Cross join</span></span>
+<span id="cb53-28"><a href="#cb53-28"></a><span class="fu">crossjoin</span>(<span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>origin)), <span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>dest)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a><span class="co"># Load second dataset</span></span>
+<span id="cb54-2"><a href="#cb54-2"></a>dat_airports <span class="ot">=</span> <span class="fu">fread</span>(</span>
+<span id="cb54-3"><a href="#cb54-3"></a>    <span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>) </span>
+<span id="cb54-4"><a href="#cb54-4"></a></span>
+<span id="cb54-5"><a href="#cb54-5"></a></span>
+<span id="cb54-6"><a href="#cb54-6"></a><span class="co"># Inner join (default)</span></span>
+<span id="cb54-7"><a href="#cb54-7"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by.x =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">by.y =</span> <span class="fu">c</span>(<span class="st">"faa"</span>))</span>
+<span id="cb54-8"><a href="#cb54-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
+<span id="cb54-9"><a href="#cb54-9"></a><span class="fu">setnames</span>(dat_airports, <span class="fu">c</span>(<span class="st">"faa"</span>), <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb54-10"><a href="#cb54-10"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb54-11"><a href="#cb54-11"></a></span>
+<span id="cb54-12"><a href="#cb54-12"></a><span class="co"># with missing values</span></span>
+<span id="cb54-13"><a href="#cb54-13"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb54-14"><a href="#cb54-14"></a></span>
+<span id="cb54-15"><a href="#cb54-15"></a><span class="co"># Other types of merge</span></span>
+<span id="cb54-16"><a href="#cb54-16"></a><span class="co"># Left join</span></span>
+<span id="cb54-17"><a href="#cb54-17"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb54-18"><a href="#cb54-18"></a></span>
+<span id="cb54-19"><a href="#cb54-19"></a><span class="co"># Right join</span></span>
+<span id="cb54-20"><a href="#cb54-20"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb54-21"><a href="#cb54-21"></a><span class="co"># Outer join</span></span>
+<span id="cb54-22"><a href="#cb54-22"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>, <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb54-23"><a href="#cb54-23"></a><span class="co"># Semi join (filtering)</span></span>
+<span id="cb54-24"><a href="#cb54-24"></a><span class="fu">merge</span>(dat, dat_airports[, .(dest)], <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb54-25"><a href="#cb54-25"></a><span class="co"># Anti join</span></span>
+<span id="cb54-26"><a href="#cb54-26"></a>dat[<span class="fu">fsetdiff</span>(dat[, .(dest)], dat_airports[, .(dest)]), on <span class="ot">=</span> <span class="st">"dest"</span>]</span>
+<span id="cb54-27"><a href="#cb54-27"></a><span class="co"># Cross join</span></span>
+<span id="cb54-28"><a href="#cb54-28"></a><span class="fu">CJ</span>(<span class="fu">unique</span>(dat[[<span class="st">"origin"</span>]]), <span class="fu">unique</span>(dat[[<span class="st">"dest"</span>]])) <span class="co"># all combination of origin and destinations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="advanced-merging" class="level2">
+<h2 class="anchored" data-anchor-id="advanced-merging">Advanced merging</h2>
+<section id="non-equi-joins" class="level4">
+<h4 class="anchored" data-anchor-id="non-equi-joins">Non-equi joins</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb55"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>dat3 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier     =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
+<span id="cb56-2"><a href="#cb56-2"></a>                  <span class="at">start_month =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">4</span>),</span>
+<span id="cb56-3"><a href="#cb56-3"></a>                  <span class="at">end_month   =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)) </span>
+<span id="cb56-4"><a href="#cb56-4"></a></span>
+<span id="cb56-5"><a href="#cb56-5"></a><span class="co"># Rolling join that catches everything between the distinct</span></span>
+<span id="cb56-6"><a href="#cb56-6"></a><span class="co"># start and end dates for each carrier.</span></span>
+<span id="cb56-7"><a href="#cb56-7"></a>dat[dat3, on <span class="ot">=</span> .(carrier,</span>
+<span id="cb56-8"><a href="#cb56-8"></a>                 month <span class="sc">&gt;=</span> start_month,</span>
+<span id="cb56-9"><a href="#cb56-9"></a>                 month <span class="sc">&lt;=</span> end_month)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="rolling-joins" class="level4">
+<h4 class="anchored" data-anchor-id="rolling-joins">Rolling joins</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb57"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a></span>
+<span id="cb58-2"><a href="#cb58-2"></a><span class="co"># Make sure we have a date variable</span></span>
+<span id="cb58-3"><a href="#cb58-3"></a>dat[, date <span class="sc">:</span><span class="er">=</span> <span class="fu">as.IDate</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">'-'</span>))] </span>
+<span id="cb58-4"><a href="#cb58-4"></a></span>
+<span id="cb58-5"><a href="#cb58-5"></a><span class="co"># New DT with the (random) target dates</span></span>
+<span id="cb58-6"><a href="#cb58-6"></a>dat4 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier  =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
+<span id="cb58-7"><a href="#cb58-7"></a>                  <span class="at">new_date =</span> <span class="fu">as.IDate</span>(<span class="fu">c</span>(<span class="st">'2014-11-01'</span>, <span class="st">'2014-11-15'</span>))) </span>
+<span id="cb58-8"><a href="#cb58-8"></a></span>
+<span id="cb58-9"><a href="#cb58-9"></a><span class="co"># Join on these target dates, so they take the last known value </span></span>
+<span id="cb58-10"><a href="#cb58-10"></a>dat[dat4, on <span class="ot">=</span> .(carrier, <span class="at">date=</span>new_date), roll<span class="ot">=</span><span class="st">'nearest'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</section>
+<section id="appending-data" class="level4">
+<h4 class="anchored" data-anchor-id="appending-data">Appending data</h4>
+<div class="grid">
+<div class="g-col-6">
+<div class="sourceCode" id="cb59"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb59-1"><a href="#cb59-1"></a><span class="fu">vcat</span>(dat, dat)</span>
+<span id="cb59-2"><a href="#cb59-2"></a><span class="fu">vcat</span>(dat, dat, cols<span class="op">=:</span>union)</span>
+<span id="cb59-3"><a href="#cb59-3"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="g-col-6">
+<div class="sourceCode" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat)) <span class="co"># useful if working with list (purrr)</span></span>
+<span id="cb60-2"><a href="#cb60-2"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat), <span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb60-3"><a href="#cb60-3"></a><span class="fu">rbind</span>(dat, dat, <span class="at">fill =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<!-- ----------------------------------------------------------------------------------- -->
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

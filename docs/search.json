@@ -1,0 +1,128 @@
+[
+  {
+    "objectID": "DT_to_DF.html",
+    "href": "DT_to_DF.html",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "",
+    "text": "I will mostly follow the excellent stata2r as a template.\nYou can also have a look at some of the mappings in the DataFrames.jl documentation\nI have found this guide of data.table by Andrew Brooks very useful.\n\n\n\n\n\nMissing Data. Dealing with missing data in julia requires to be explicit as most functions will return a missing value if an array includes a missing element. Some functions will error. I will try to point out the equivalence with the R code but be aware that the equivalence might not be always be strictly the same if you implement it. I show some of the examples on the Freedman dataset from the car package in R.\nNeed improvement.\n\nA few specific sections could use some user inputs as the julia solutions were less than ideal: Leads and lags; Dates; Complex merges\n\n\n\n\n\n\nThis is a first draft and there might be a few mistakes throughout the document. I am not a professional and I probably picked up bad habits here and there.\nEmail me at eloualic@umn.edu\nFile an issue on github here if you want to start a dicussion or have ideas of things to add/change"
+  },
+  {
+    "objectID": "DT_to_DF.html#reading-data",
+    "href": "DT_to_DF.html#reading-data",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Reading Data",
+    "text": "Reading Data\nI am using the flight dataset to run most of the examples. This assumes your data is in a csv format.\nThere are options in both languages to read from more efficient formats like parquet. I have found that csv is both fast and idioproof and lends itself to quick manipulation on the shell if I need to do something quickly.\n\n\nIn julia, the CSV.jl package does not allow to read directly from a url but we can use the HTTP.jl package to download the file.\n\n\nIn R, you can directly read the dataset from an url using fread in data.table.\n\n\n\n\n# Flights data\nurl_flights = \"https://raw.githubusercontent.com/Rdatatable/data.table/master/vignettes/flights14.csv\"\nurl_get = HTTP.get(url_flights);\ndat = CSV.read(url_get.body, DataFrame)\n\n# Freedman data\ndat_missing = RDatasets.dataset(\"car\", \"Freedman\")\n\n\n# Flights data\nurl_flights = \"https://raw.githubusercontent.com/Rdatatable/data.table/master/vignettes/flights14.csv\"\n\ndat = fread(url_flights)\n\n# Freedman data\ndat_missing = data.table(Freedman) # load and convert to data.table"
+  },
+  {
+    "objectID": "DT_to_DF.html#writing-data",
+    "href": "DT_to_DF.html#writing-data",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Writing Data",
+    "text": "Writing Data\n\n\nTo write the file we use a similar function. It is also possible to save the file with compression\n\n\nSimilarly data.table provides a write function with optional compression\n\n\n\n\nCSV.write(\"./data.csv\", dat)\nCSV.write(\"./data.csv.gz\", dat; compress=true)\nIf you want to set up a different compression algorithm (faster or more efficient) use TranscodingStreams.jl with the appropriate codec. For example if you want to use zst you would do\nPkg.add(\"CodecZstd\")\nusing CodecZstd\nopen(ZstdCompressorStream, \"./data.csv.zst\", \"w\") do stream\n    CSV.write(stream, dat)\nend\n\n# similarly to read it back\ndat = open(ZstdDecompressorStream, \"./data.csv.zst\", \"r\") do stream\n    CSV.read(stream, DataFrame)\nend\n\n\nfwrite(dat, \"./data.csv\")\nfwrite(dat, \"./data.csv.gz\", compress=\"gzip\") # with compression"
+  },
+  {
+    "objectID": "DT_to_DF.html#benchmarks",
+    "href": "DT_to_DF.html#benchmarks",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "(Benchmarks)",
+    "text": "(Benchmarks)\nI would like to include a benchmark for one large file and compare csv intake to parquet."
+  },
+  {
+    "objectID": "DT_to_DF.html#sorting",
+    "href": "DT_to_DF.html#sorting",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Sorting",
+    "text": "Sorting\nIt is important to be able to sort rows. What are the most delayed flights, what about the most delayed flight on a specific day?\nNote that the code changes the order “in-place” as it changes the dataset itself.\n\n\nThe most basic task is to sort some columns with respect to a specific variable\n\n\nSimilarly data.table provides a write function with optional compression\n\n\n\n\nsort!(dat, :air_time)\nsort!(dat, [:air_time, :dest])\nsort!(dat, :air_time; rev=true)\nsort!(dat, [order(:air_time, rev=true), :dest])\n\n# if you do not want to change the dataset in place\nsort(dat, :air_time)\n\n\nsetorder(dat, air_time) \nsetorder(dat, air_time, dest) \nsetorder(dat, -air_time)\nsetorder(dat, -air_time, dest)\n\n# if you do not want to change the dataset in place\ndat[ order(air_time)] # etc.\nTo reorder a dataset programmatically use the setorderv function\ncol = \"air_time\"\nsetorderv(dat, col)\n\n\nIf we want to reorder columns\n\n\nselect!(dat, [:month, :day], Not([:month, :day]))\n\n\nsetcolorder(dat, c(\"month\", \"day\"))"
+  },
+  {
+    "objectID": "DT_to_DF.html#renaming",
+    "href": "DT_to_DF.html#renaming",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Renaming",
+    "text": "Renaming\nRenaming does modify the dataset but it does not alter its data so we include it here.\n\n\nThis is where I start leaning on the macros from DataFramesMeta.jl\n\n\nSimilarly data.table provides a write function with optional compression\n\n\n\n\n@rename!(dat, :new_arr_delay = :arr_delay)\n@rename!(dat, :new_carrier = :carrier, :new_origin  = $\"origin\") \n@rename(dat, :new_arr_delay = :arr_delay) # not in place\n\nrename!(x -&gt; replace(x, \"arr_\" =&gt; \"arrival_\"), dat) # use the base DataFrames.jl function here\n\n\nsetnames(dat, \"new_arr_delay\", \"arrival_delay\") \nsetnames(dat, c(\"carrier\",\"origin\"), c(\"new_carrier\",\"new_origin\")) \n\n\nsetnames(dat, gsub(\"arr_\", \"arrival_\", names(dat)))"
+  },
+  {
+    "objectID": "DT_to_DF.html#summary-statistics",
+    "href": "DT_to_DF.html#summary-statistics",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Summary Statistics",
+    "text": "Summary Statistics\n\n\ndescribe(dat)\ndescribe(dat, :arr_delay)\ndescribe(dat, :min, :detailed, cols=:arr_delay) \n\n\nsum_up(dat) # from statar package\nsum_up(dat, arr_delay)\nsum_up(dat, arr_delay, d = TRUE)"
+  },
+  {
+    "objectID": "DT_to_DF.html#tabulations",
+    "href": "DT_to_DF.html#tabulations",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Tabulations",
+    "text": "Tabulations\n\n\nsummary_var = :carrier # or [:carrier, :origin]\n@pipe dat |&gt; groupby(_, summary_var) |&gt;\n    combine(_, nrow =&gt; :Freq, proprow =&gt; :Percent) |&gt;\n    @transform(_, :Cum = cumsum(:Percent))\n\n\n\ntab(dat, carrier) # from statar package\ntab(dat, carrier, origin)\n# data.table version\ndat[, .N, by = .(carrier, origin)][,\n    `:=`(Percent=100*N/nrow(dat), Cum=100*cumsum(N)/nrow(dat)) ][]"
+  },
+  {
+    "objectID": "DT_to_DF.html#subsetting-rows",
+    "href": "DT_to_DF.html#subsetting-rows",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Subsetting rows",
+    "text": "Subsetting rows\n\nOn the flights data\n\n\nThere are multiple options for filteringhis is where I start leaning on the macros from DataFramesMeta.jl\n\n\nIn data.table filtering is not in place and you will need to assign the dataset (to itself) for the changes to propagate.\n\n\n\n\ndat[1:200, :]\nsubset(dat, :day =&gt; x -&gt; x .&gt; 5 .& x .&lt; 10) # from dataframes base\n@subset(dat, :day .&gt; 5 .& :day .&lt; 10) # note the `.` for broadcasting\n@rsubset(dat, :day &gt; 5 & :day &lt; 10)  # note the `r` for change by row\n@rsubset!(dat, :day &gt; 5 & :day &lt; 10) # change in place\n@rsubset(dat, :origin == \"LGA\")\n@rsubset(dat, occursin(r\"^LG\", :origin))\n@rsubset(dat, :month ∈ [3, 4, 11, 12])\n@rsubset(dat, :origin ∈ [\"JFK\", \"LGA\"])\n@rsubset(dat, :month != 1)\n\n\ndat[1:200] \ndat[day &gt; 5 & day &lt; 10]        # filtering only\n\n\ndat = dat[day &gt; 5 & day &lt; 10]  # filtering and reassigning\ndat[origin==\"LGA\"]\ndat[origin %like% \"^LG\"] \ndat[month %in% c(3,4,11,12)] \ndat[origin %chin% c(\"JFK\",\"LGA\")] # %chin% is a fast %in% for characters \ndat[month!=1]\n\n\n\n\nOn the Freedman data (with missing values)\nIn this case we need to be careful on how we deal with missing data. Note that to find the missings julia uses the isequal function (because missing===missing returns missing).\n\n\nsubset(dat_missing, :Population =&gt; x -&gt; x .&lt; 1000; skipmissing=true)\n@rsubset(dat_missing, :Population .&lt; 1000) # treats missing values as false by default\n@rsubset(dat_missing, isequal(:Population, missing) )\n\n\ndat_missing[ population &lt; 1000 ]\n\ndat_missing[is.na(population)]"
+  },
+  {
+    "objectID": "DT_to_DF.html#dropping-duplicate-or-missing-values",
+    "href": "DT_to_DF.html#dropping-duplicate-or-missing-values",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Dropping duplicate or missing values",
+    "text": "Dropping duplicate or missing values\n\nDrop duplicate values\n\n\nunique(dat; keep=:first)  # default\nunique!(dat; keep=:first) # in place\nunique(dat; keep=:noduplicates) # :last also an option\nunique(dat, [:month, :day, :carrier])\n\n\nunique(dat) \ndat = unique(dat) \n\nunique(dat, by = c(\"month\", \"day\", \"carrier\"))\n\n\n\n\nDrop missing values\n\n\ndropmissing(dat_missing)\ndropmissing!(dat_missing) # in place\ndropmissing(dat_missing, :Population)\ndropmissing(dat_missing, [:Population, :Density])\n\n# if the column type still include missing values convert the array to non missing types\ndisallowmissing(dat_missing)\ndisallowmissing(dat_missing, :Density)\n\n\nna.omit(dat_missing) \ndat_missing = na.omit(dat_missing) \n\ndat_missing[!is.na(population)]\ndat_missing[!is.na(population) & !is.na(density)]"
+  },
+  {
+    "objectID": "DT_to_DF.html#selecting-columns",
+    "href": "DT_to_DF.html#selecting-columns",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Selecting columns",
+    "text": "Selecting columns\n\n\n# select columns\nselect(dat, :month, :day, :carrier)\nselect!(dat, :month, :day, :carrier)   # in place\nselect(dat, \"month\", \"day\", \"carrier\") # also works\nselect(dat, r\"_delay\")\nselect(dat, .!(eltype.(eachcol(dat)) .&lt;: AbstractString) )\nselect(dat_missing, (eltype.(eachcol(dat_missing)) .&lt;: Union{Missing, Int}) ) # if some columns include missing\n\n# removing select columns\nselect(dat, Not([:origin, :dest]))\nselect!(dat, Not([:origin, :dest])) # in place\n\n\n# select columns\ndat[, .(month, day, carrier)] \ndat = dat[, .(month, day, carrier)] # \"in place\"\ndat[, c(\"month\", \"day\", \"carrier\")] # same but programmatic\ndat[, .SD, .SDcols=patterns(\"*_delay\")] # keep columns by matching\ndat[, .SD, .SDcols=!is.character]       # keep columns by type\n\n\n# removing select columns\ndat[, -c(\"origin\", \"dest\")]\ndat[, c(\"origin\", \"dest\") := NULL] # same, but in-place"
+  },
+  {
+    "objectID": "DT_to_DF.html#rows-and-columns",
+    "href": "DT_to_DF.html#rows-and-columns",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Rows and columns",
+    "text": "Rows and columns\n\n\n@select(@rsubset(dat, :origin==\"LGA\"), \n    :month, :day, :carrier)\n@pipe dat |&gt; @rsubset(_, :origin==\"LGA\") |&gt; \n    @select(_, :month, :day, :carrier)\n\n\ndat[origin==\"LGA\", .(month, day, carrier)]"
+  },
+  {
+    "objectID": "DT_to_DF.html#basic-operations",
+    "href": "DT_to_DF.html#basic-operations",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Basic operations",
+    "text": "Basic operations\n\n\n@transform!(dat, :tot_delay = :dep_delay + :arr_delay)\n@rtransform!(dat, :segment = :origin * :dest) # rowwise operation\n\n# Programmatic version\nx = \"dep_delay\"; y = \"arr_delay\"; z = \"tot_delay\";\n@transform!(dat, $z = $x + $y)\n\n# Conditional modification \ndat[dat.month.==9, :distance] = dat[dat.month.==9, :distance] .+ 1;\ndat[1:2, :air_time] .= 0;\n# Or with missing values\ndat_missing[isequal.(dat_missing.Population, missing), :City] .= \"NOPOP\";\n\n\ndat[, tot_delay := dep_delay + arr_delay] \ndat[, segment := paste0(origin, dest) ]\n\n# Programmatic version\nx = \"dep_delay\"; y = \"arr_delay\"; z = \"tot_delay\"\ndat[, c(z) := get(x) + get(y) ]\n\n# Conditional modification \ndat[month==9, distance := distance + 1]\ndat[1:2, origin := \"OBS\"]\n# Or with missing values\ndat_missing[is.na(population), City := \"NOPOP\"]"
+  },
+  {
+    "objectID": "DT_to_DF.html#grouped-operations",
+    "href": "DT_to_DF.html#grouped-operations",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Grouped operations",
+    "text": "Grouped operations\n\n\n@pipe dat |&gt; groupby(_, :carrier) |&gt; \n    @transform!(_, :avg_arr_delay = mean(:arr_delay)) # in place\n@pipe dat |&gt; groupby(_, :carrier) |&gt; \n    @combine(_, :avg_arr_delay = mean(:arr_delay))\n\n\ndat[, avg_arr_delay := mean(arr_delay), by=carrier] \n\ndat[, .(avg_arr_delay = mean(arr_delay, na.rm=T)), by=carrier]  # collapse see aggregation section below"
+  },
+  {
+    "objectID": "DT_to_DF.html#leads-and-lags",
+    "href": "DT_to_DF.html#leads-and-lags",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Leads and lags",
+    "text": "Leads and lags\n\nStandard leads and lags\nI work with shifts on dates here but the dataset is a full panel with consecutive dates so there is nothing special about the dates variable per-se. It is easier to see this on a smaller dataset. So I aggregate the data to get the total monthly flights out of each origin airport (see last section).\n\n\nFor leads and lags on arrays, I use the ShiftedArrays package which works fine for standard operations (read: as long as you are not dealing with dates).\n\n\nFor standard leads and lags, it is faster to use the built-in shift function from data.table.\n\n\n\n\ndat_shift = combine(\n    groupby(dat, [:origin, :month]), \n    nrow =&gt; :N)\nsort!(dat_shift, [:origin, :month])    \n\n@transform!(groupby(dat_shift, :origin), \n    :growth = :N ./ ShiftedArrays.lag(:N, 1))\n@transform!(groupby(dat_shift, :origin), \n    :growth_since_first = :N ./ :N[1] )\n\n# The following is probably not optimal; here are two versions\n@pipe dat_shift |&gt; \n    groupby(_, :origin) |&gt; @subset(_, 5 ∈ :month) |&gt;  # this errors if month 5 is missing in a group\n    groupby(_, :origin) |&gt; @transform(_, :growth_since_may = :N ./ :N[:month.==5])\nfor subdf in groupby(dat_shift, :origin)    \n    if 5 ∈ subdf.month\n        @transform!(subdf, :growth_since_may = :N ./ :N[:month.==5])\n    end\nend\n\n\ndat_shift = dat[, .N, by = .(origin, month)]\nsetorder(dat_shift, origin, month)\n\n\n\ndat_shift[, growth := N/shift(N, 1), by = origin]\n\ndat_shift[, growth_since_first := N/N[1], by = origin] \n\ndat_shift[, growth_since_may := N/N[month==5], by = origin]\ndat_shift[, growth_since_may := .SD[[\"N\"]]/.SD[month==5][[\"N\"]], \n    .SDcols = c(\"N\", \"month\"), by = origin]\n\n\n\n\nThe case of dates\nDates are messy (imho). Lagging a variable by three months in a monthly panel does not necessarily translate into shifting the data by 3 indices (if the panel is unbalanced for example). The correct date function should check that “shifting” by three months in April corresponds to January and not December (if January is missing).\n\n\n@rtransform!(dat, :date = Date(:year, :month, :day) )\n\n\n# Including time\n@rtransform!(dat, :date_time = DateTime(:year, :month, :day, :hour) )\n\n@rtransform!(dat, :date_y = year(:date))\n@rtransform!(dat, :f7d_date = :date + Dates.Day(7))\n@rtransform!(dat, :l3m_date = :date - Dates.Month(3))\n\n\n# Make a date variable using data.table built-in IDate\ndat[, date := as.IDate(paste(year, month, day, sep='-'))] \n# It is usually faster to use lubridate parser \ndat[, date := parse_date_time2(paste(year, month, day, sep='-'), \"Y-m-d\")]\ndat[, date_time := parse_date_time2(paste(year, month, day, hour, sep='-'), \"Y-m-d-H\")]\n\ndat[, date_y := year(date)] # extract year\ndat[, f7d_date := date + days(7) ]   # date in 7 days\ndat[, l3m_date := date - months(3) ] # date three months ago\n\n\nOnce we know how to lag dates, we would like to answer questions such as: what was the average flight delay for each origin airport three months ago compared to today? We will work with the aggregate delays by origins.\n\n\nIn julia, the ShiftedArrays package does not support dates (See this post on discourse and this issue)\nThis is one of the most annoying thing when working with dates and panel data in julia. I have found that PanelShift.jl solves the problem but it is still in version 0.1.1 and it is unclear how many updates it is receiving. What is nice with julia is that you can simply loop over the data and do exactly what you want to do.\n\n\nIn R, I use the utility tlag and tlead from statar which lags based on date intervals.\n\n\n\n\n@rtransform!(dat, :date = Date(:year, :month, :day) )\ndat_shift = @combine(groupby(dat, [:origin, :date]), :arr_delay = mean(:arr_delay) )\n\n# I could not find a built-in function, but julia is amenable to loops\ndat_shift.l3m_arr_delay = Array{Union{Missing,Float64}}(undef, nrow(dat_shift));\nfor subdf in groupby(dat_shift, :origin)    \n    for date_iter in subdf.date\n           idx = isequal.(subdf.date, date_iter - Dates.Month(3))\n        if (sum(idx)==1)\n            subdf[ subdf.date .== date_iter, :l3m_arr_delay] .= subdf[idx, :arr_delay]\n        end\n    end\nend\n# sort(dat_shift, [:origin, :date])\n\n# using PanelShift\n@transform!(groupby(dat_shift, :origin),\n    :l3m_arr_delay = tlag(:date, :arr_delay, Month(3) ) )\npanellag!(dat_shift, :origin, :date, \n    :arr_delay, :l3m_arr_delay, Month(3))\n\n\ndat_shift = dat[, .(arr_delay = mean(arr_delay, na.rm=T)), \n    by = .(origin, date=parse_date_time2(paste(year, month, day, sep=\"-\"\"), \"Y-m-d\"))]\n\ndat_shift[, l3m_arr_delay := tlag(arr_delay, n=months(3), time=date), by = .(origin) ]\n# setorder(dat_shift, origin, date)"
+  },
+  {
+    "objectID": "DT_to_DF.html#advanced-examples",
+    "href": "DT_to_DF.html#advanced-examples",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Advanced examples",
+    "text": "Advanced examples\n\nApplying functions to multiple variables\n\n\n\n\n\n\nLoops: if you have to use loops for convenience, data.table provides set which allows to change values withouth the overhead of data.table. The syntax is of the form set(dat, i, j,value), where i is the row index, and j the column index (or name).\n\n\n\n\n\n# Loops\nfor col in (:tot_delay, :dep_delay) \n    dat[1:10, col] = - dat[1:10, col]\nend\n\n# Control flows \n@rtransform!(dat, :arr_delay_penaly = ifelse(:arr_delay&gt;12, 1, -1) )\n@rtransform!(dat, :arr_delay_penaly = ifelse( # no case function in julia\n    :arr_delay&gt;=15, 3, \n    ifelse(:arr_delay&gt;=6, 2, \n    ifelse(:arr_delay&gt;=0, 1, 0) ) ) )     \n\n# Modify multiple variables at the same time (same function)\ncols = [:origin, :dest]\ntransform!(dat, cols .=&gt; (x -&gt; x .* \"Airport\") .=&gt; cols)\n\n\n# Function of multiple variables (by rows)\nratio_airtime(x::NamedTuple) = (x[1] /(x[1]+x[2]))\n@rtransform! dat :frac_air = ratio_airtime(AsTable([:air_time, :tot_delay]))\nratio_airtime(x, y) = (x /(x+y))\ntransform(dat, [:air_time, :tot_delay] =&gt; ByRow((ratio_airtime)) =&gt; :frac_air)\n\n\n# Loops\nfor (j in c(\"tot_delay\", \"dep_delay\")){ # (faster) loops \n    set(dat, 1:10, j=j, value=-dat[1:10][[j]])\n}\n\n# Control flows \ndat[, arr_delay_penaly := fifelse(arr_delay&gt;12, 1, -1) ]\ndat[, arr_delay_penaly := fcase(arr_delay&gt;=15, 3, \n                                arr_delay&gt;=6,  2,\n                                arr_delay&gt;=0,  1,\n                                default = 0) ]\n\n# Modify multiple variables at the same time\ncols = c(\"origin\", \"dest\")\ndat[, (cols) := lapply(.SD, \\(x) paste(x,\"Airport\")), \n    .SDcols = cols]   \n\n# Function of multiple variables \ndat[, tot_delay := rowSums(.SD), .SDcols=patterns('*_delay')]\nratio_airtime = function(air, tot)  (air /(air+tot))\n# dat[, frac_air := ratio_airtime(air_time, tot_delay) ]\ndat[, frac_air := ratio_airtime(air_time, tot_delay), by=.I] # row-wise operation\n\n\n\n\nApplying complex functions\n\n\n# Regressions by groups\n# using FixedEffectModels\nfor subdf in groupby(dat, [:year, :month])\n    reg_res = reg(subdf, @formula(tot_delay ~ air_time))\n    subdf[:, :β] .= coef(reg_res)[2]\n    subdf[: , :σ] .= sqrt.(vcov(reg_res)[2,2])\nend\nselect(dat, [:year, :month, :β, :σ]) |&gt; unique\n\n\n\n\n\n\n\n# Regressions by groups\ndat_reg = dat[, .(\n    {\n        y = as.matrix(.SD[[\"tot_delay\"]]) \n        x = as.matrix(cbind(1, .SD[[\"air_time\"]]) )\n        reg_res = lm.fit(x, y)\n        b = coefficients(reg_res)[2]\n        se = sqrt(sum(reg_res[[\"residuals\"]]^2) / var(.SD[[\"air_time\"]]) ) / .N\n        c(b,se)\n    }, \n    seq(1,2) ),\n    by = .(year, month) ]\ndcast(dat_reg, year + month ~ V2, value.var=\"V1\") # anticipating on reshape section"
+  },
+  {
+    "objectID": "DT_to_DF.html#basic-merge",
+    "href": "DT_to_DF.html#basic-merge",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Basic merge",
+    "text": "Basic merge\n\n\n# Load second dataset\ndat_airports = CSV.read(\n    HTTP.get(\"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv\").body,\n    DataFrame) \n\n# Inner join\ninnerjoin(dat, dat_airports, on = :dest =&gt; :faa)\n# if the datasets share a common name for the merge variable\n@rename!(dat_airports, :dest = :faa)\ninnerjoin(dat, dat_airports, on = :dest)\n\n# with missing values\ninnerjoin(dat, dat_airports, on = :dest; matchmissing=:equal)\n\n# Other types of merge\n# Left join\nleftjoin(dat, dat_airports, on = :dest)\nleftjoin(dat, dat_airports, on = :dest, source=\"_merge\") # stata style merge info\n# Right join\nrightjoin(dat, dat_airports, on = :dest)\n# Outer join\nouterjoin(dat, dat_airports, on = :dest)\n# Semi join (filtering)\nsemijoin(dat, dat_airports, on = :dest)\n# Anti join\nantijoin(dat, dat_airports, on = :dest)\n# Cross join\ncrossjoin(unique(select(dat, :origin)), unique(select(dat, :dest)) )\n\n\n# Load second dataset\ndat_airports = fread(\n    \"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv\") \n\n\n# Inner join (default)\nmerge(dat, dat_airports, by.x = c(\"dest\"), by.y = c(\"faa\"))\n# if the datasets share a common name for the merge variable\nsetnames(dat_airports, c(\"faa\"), c(\"dest\"))\nmerge(dat, dat_airports, by = c(\"dest\"))\n\n# with missing values\nmerge(dat, dat_airports, by = c(\"dest\"))\n\n# Other types of merge\n# Left join\nmerge(dat, dat_airports, by = c(\"dest\"), all.x = TRUE)\n\n# Right join\nmerge(dat, dat_airports, by = c(\"dest\"), all.y = TRUE)\n# Outer join\nmerge(dat, dat_airports, by = c(\"dest\"), all.x = TRUE, all.y = TRUE)\n# Semi join (filtering)\nmerge(dat, dat_airports[, .(dest)], by = c(\"dest\"))\n# Anti join\ndat[fsetdiff(dat[, .(dest)], dat_airports[, .(dest)]), on = \"dest\"]\n# Cross join\nCJ(unique(dat[[\"origin\"]]), unique(dat[[\"dest\"]])) # all combination of origin and destinations"
+  },
+  {
+    "objectID": "DT_to_DF.html#advanced-merging",
+    "href": "DT_to_DF.html#advanced-merging",
+    "title": "Tips for using DataFrames.jl from R data.table",
+    "section": "Advanced merging",
+    "text": "Advanced merging\n\nNon-equi joins\n\n\n\n\n\ndat3 = data.table(carrier     = c('AA', 'UA'),\n                  start_month = c(1, 4),\n                  end_month   = c(3, 6)) \n\n# Rolling join that catches everything between the distinct\n# start and end dates for each carrier.\ndat[dat3, on = .(carrier,\n                 month &gt;= start_month,\n                 month &lt;= end_month)] \n\n\n\n\nRolling joins\n\n\n\n\n\n\n# Make sure we have a date variable\ndat[, date := as.IDate(paste(year, month, day, sep='-'))] \n\n# New DT with the (random) target dates\ndat4 = data.table(carrier  = c('AA', 'UA'),\n                  new_date = as.IDate(c('2014-11-01', '2014-11-15'))) \n\n# Join on these target dates, so they take the last known value \ndat[dat4, on = .(carrier, date=new_date), roll='nearest']\n\n\n\n\nAppending data\n\n\nvcat(dat, dat)\nvcat(dat, dat, cols=:union)\n\n\n\nrbindlist(list(dat, dat)) # useful if working with list (purrr)\nrbindlist(list(dat, dat), fill = TRUE)\nrbind(dat, dat, fill = TRUE)"
+  }
+]
