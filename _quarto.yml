@@ -1,3 +1,5 @@
 project:
   type: website
   output-dir: docs
+  render: 
+    - DT_to_DF.qmd
