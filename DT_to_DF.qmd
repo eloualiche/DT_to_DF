@@ -41,13 +41,13 @@ jupyter: python3
 
 - **Missing Data.** Dealing with missing data in julia requires to be explicit as most functions will return a `missing` value if an array includes a missing element. Some functions will error. I will try to point out the equivalence with the `R` code but be aware that the equivalence might not be always be strictly the same if you implement it. I show some of the examples on the *Freedman* dataset from the `car` package in R.
 - **Need improvement.** 
-    +  A few specific sections could use some user inputs as the julia solutions were less than ideal: [*Leads and lags*](http://localhost:5005/#leads-and-lags); *Dates*; *Complex merges*
+    +  A few specific sections could use some user inputs as the julia solutions were less than ideal: [*Leads and lags*](https://eloualiche.github.io/DT_to_DF/DT_to_DF.html/#leads-and-lags); *Dates*; *Complex merges*
 
 #### Issues
 
 - This is a first draft and there might be a few mistakes throughout the document. I am not a professional and I probably picked up bad habits here and there. 
 - Email me at [eloualic@umn.edu](mailto:eloualic@umn.edu)
-- File an issue on [github here](https://eloualiche.github.io/DT_to_DF) if you want to start a dicussion or have ideas of things to add/change
+- File an issue on [github here](https://github.com/eloualiche/DT_to_DF/issues) if you want to start a dicussion or have ideas of things to add/change
 
 
 <!-- ----------------------------------------------------------------------------------- -->
