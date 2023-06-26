@@ -1160,16 +1160,17 @@ dat[dat4, on = .(carrier, date=new_date), roll='nearest']
 ```{.julia}
 vcat(dat, dat)
 vcat(dat, dat, cols=:union)
-
-
+reduce(vcat, [dat, dat])
+reduce(vcat, [dat, dat], cols=:union)
 ```
 :::
 
 ::: {.g-col-6}
 ```{.r}
+rbind(dat, dat)
+rbind(dat, dat, fill = TRUE)
 rbindlist(list(dat, dat)) # useful if working with list (purrr)
 rbindlist(list(dat, dat), fill = TRUE)
-rbind(dat, dat, fill = TRUE)
 ```
 :::
 :::

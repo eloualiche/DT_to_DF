@@ -1094,12 +1094,14 @@ background: #014421;
 <div class="g-col-6">
 <div class="sourceCode" id="cb59"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb59-1"><a href="#cb59-1"></a><span class="fu">vcat</span>(dat, dat)</span>
 <span id="cb59-2"><a href="#cb59-2"></a><span class="fu">vcat</span>(dat, dat, cols<span class="op">=:</span>union)</span>
-<span id="cb59-3"><a href="#cb59-3"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb59-3"><a href="#cb59-3"></a><span class="fu">reduce</span>(vcat, [dat, dat])</span>
+<span id="cb59-4"><a href="#cb59-4"></a><span class="fu">reduce</span>(vcat, [dat, dat], cols<span class="op">=:</span>union)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat)) <span class="co"># useful if working with list (purrr)</span></span>
-<span id="cb60-2"><a href="#cb60-2"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat), <span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb60-3"><a href="#cb60-3"></a><span class="fu">rbind</span>(dat, dat, <span class="at">fill =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a><span class="fu">rbind</span>(dat, dat)</span>
+<span id="cb60-2"><a href="#cb60-2"></a><span class="fu">rbind</span>(dat, dat, <span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb60-3"><a href="#cb60-3"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat)) <span class="co"># useful if working with list (purrr)</span></span>
+<span id="cb60-4"><a href="#cb60-4"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat), <span class="at">fill =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <!-- ----------------------------------------------------------------------------------- -->
