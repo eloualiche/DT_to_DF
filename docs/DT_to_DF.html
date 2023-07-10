@@ -992,28 +992,33 @@ background: #014421;
 <span id="cb53-4"><a href="#cb53-4"></a>    DataFrame) </span>
 <span id="cb53-5"><a href="#cb53-5"></a></span>
 <span id="cb53-6"><a href="#cb53-6"></a><span class="co"># Inner join</span></span>
-<span id="cb53-7"><a href="#cb53-7"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest <span class="op">=&gt;</span> <span class="op">:</span>faa)</span>
+<span id="cb53-7"><a href="#cb53-7"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest <span class="op">=&gt;</span> <span class="op">:</span>faa)</span>
 <span id="cb53-8"><a href="#cb53-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
-<span id="cb53-9"><a href="#cb53-9"></a><span class="pp">@rename</span>!(dat_airports, <span class="op">:</span>dest <span class="op">=</span> <span class="op">:</span>faa)</span>
-<span id="cb53-10"><a href="#cb53-10"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-11"><a href="#cb53-11"></a></span>
-<span id="cb53-12"><a href="#cb53-12"></a><span class="co"># with missing values</span></span>
-<span id="cb53-13"><a href="#cb53-13"></a><span class="fu">innerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest; matchmissing<span class="op">=:</span>equal)</span>
+<span id="cb53-9"><a href="#cb53-9"></a><span class="pp">@rename</span>!(dat_airports, <span class="op">:</span>dest<span class="op">=:</span>faa)</span>
+<span id="cb53-10"><a href="#cb53-10"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-11"><a href="#cb53-11"></a><span class="co"># _join also have an in-place components that updates the first dataframe argument</span></span>
+<span id="cb53-12"><a href="#cb53-12"></a><span class="fu">innerjoin!</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-13"><a href="#cb53-13"></a></span>
 <span id="cb53-14"><a href="#cb53-14"></a></span>
-<span id="cb53-15"><a href="#cb53-15"></a><span class="co"># Other types of merge</span></span>
-<span id="cb53-16"><a href="#cb53-16"></a><span class="co"># Left join</span></span>
-<span id="cb53-17"><a href="#cb53-17"></a><span class="fu">leftjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-18"><a href="#cb53-18"></a><span class="fu">leftjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest, source<span class="op">=</span><span class="st">"_merge"</span>) <span class="co"># stata style merge info</span></span>
-<span id="cb53-19"><a href="#cb53-19"></a><span class="co"># Right join</span></span>
-<span id="cb53-20"><a href="#cb53-20"></a><span class="fu">rightjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-21"><a href="#cb53-21"></a><span class="co"># Outer join</span></span>
-<span id="cb53-22"><a href="#cb53-22"></a><span class="fu">outerjoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-23"><a href="#cb53-23"></a><span class="co"># Semi join (filtering)</span></span>
-<span id="cb53-24"><a href="#cb53-24"></a><span class="fu">semijoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-25"><a href="#cb53-25"></a><span class="co"># Anti join</span></span>
-<span id="cb53-26"><a href="#cb53-26"></a><span class="fu">antijoin</span>(dat, dat_airports, on <span class="op">=</span> <span class="op">:</span>dest)</span>
-<span id="cb53-27"><a href="#cb53-27"></a><span class="co"># Cross join</span></span>
-<span id="cb53-28"><a href="#cb53-28"></a><span class="fu">crossjoin</span>(<span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>origin)), <span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>dest)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb53-15"><a href="#cb53-15"></a><span class="co"># with missing values</span></span>
+<span id="cb53-16"><a href="#cb53-16"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest; matchmissing<span class="op">=:</span>equal)</span>
+<span id="cb53-17"><a href="#cb53-17"></a></span>
+<span id="cb53-18"><a href="#cb53-18"></a><span class="co"># Other types of merge</span></span>
+<span id="cb53-19"><a href="#cb53-19"></a><span class="co"># Left join</span></span>
+<span id="cb53-20"><a href="#cb53-20"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-21"><a href="#cb53-21"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, source<span class="op">=</span><span class="st">"_merge"</span>) <span class="co"># stata style merge info</span></span>
+<span id="cb53-22"><a href="#cb53-22"></a><span class="co"># if there are missing values in the merge columns</span></span>
+<span id="cb53-23"><a href="#cb53-23"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, matchmissing<span class="op">=:</span>notequal) <span class="co"># </span></span>
+<span id="cb53-24"><a href="#cb53-24"></a><span class="co"># Right join</span></span>
+<span id="cb53-25"><a href="#cb53-25"></a><span class="fu">rightjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-26"><a href="#cb53-26"></a><span class="co"># Outer join</span></span>
+<span id="cb53-27"><a href="#cb53-27"></a><span class="fu">outerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-28"><a href="#cb53-28"></a><span class="co"># Semi join (filtering)</span></span>
+<span id="cb53-29"><a href="#cb53-29"></a><span class="fu">semijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-30"><a href="#cb53-30"></a><span class="co"># Anti join</span></span>
+<span id="cb53-31"><a href="#cb53-31"></a><span class="fu">antijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb53-32"><a href="#cb53-32"></a><span class="co"># Cross join</span></span>
+<span id="cb53-33"><a href="#cb53-33"></a><span class="fu">crossjoin</span>(<span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>origin)), <span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>dest)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
 <div class="sourceCode" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a><span class="co"># Load second dataset</span></span>

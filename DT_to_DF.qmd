@@ -1043,26 +1043,31 @@ dat_airports = CSV.read(
     DataFrame) 
 
 # Inner join
-innerjoin(dat, dat_airports, on = :dest => :faa)
+innerjoin(dat, dat_airports, on=:dest => :faa)
 # if the datasets share a common name for the merge variable
-@rename!(dat_airports, :dest = :faa)
-innerjoin(dat, dat_airports, on = :dest)
+@rename!(dat_airports, :dest=:faa)
+innerjoin(dat, dat_airports, on=:dest)
+# _join also have an in-place components that updates the first dataframe argument
+innerjoin!(dat, dat_airports, on=:dest)
+
 
 # with missing values
-innerjoin(dat, dat_airports, on = :dest; matchmissing=:equal)
+innerjoin(dat, dat_airports, on=:dest; matchmissing=:equal)
 
 # Other types of merge
 # Left join
-leftjoin(dat, dat_airports, on = :dest)
-leftjoin(dat, dat_airports, on = :dest, source="_merge") # stata style merge info
+leftjoin(dat, dat_airports, on=:dest)
+leftjoin(dat, dat_airports, on=:dest, source="_merge") # stata style merge info
+# if there are missing values in the merge columns
+leftjoin(dat, dat_airports, on=:dest, matchmissing=:notequal) # 
 # Right join
-rightjoin(dat, dat_airports, on = :dest)
+rightjoin(dat, dat_airports, on=:dest)
 # Outer join
-outerjoin(dat, dat_airports, on = :dest)
+outerjoin(dat, dat_airports, on=:dest)
 # Semi join (filtering)
-semijoin(dat, dat_airports, on = :dest)
+semijoin(dat, dat_airports, on=:dest)
 # Anti join
-antijoin(dat, dat_airports, on = :dest)
+antijoin(dat, dat_airports, on=:dest)
 # Cross join
 crossjoin(unique(select(dat, :origin)), unique(select(dat, :dest)) )
 ```
