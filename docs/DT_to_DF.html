@@ -281,7 +281,7 @@ background: #014421;
 <span id="cb3-13"><a href="#cb3-13"></a><span class="im">using</span> <span class="bu">Dates</span></span>
 <span id="cb3-14"><a href="#cb3-14"></a></span>
 <span id="cb3-15"><a href="#cb3-15"></a><span class="co"># We will need some statistical function from the Base package</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a><span class="im">import</span> <span class="bu">Statistics</span>: mean </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-16"><a href="#cb3-16"></a><span class="im">import</span> <span class="bu">Statistics</span>: mean, median, quantile</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
 <div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">install.packages</span>(<span class="st">"car"</span>)       <span class="co"># RDataset</span></span>
@@ -839,35 +839,63 @@ background: #014421;
 <span id="cb43-15"><a href="#cb43-15"></a><span class="fu">transform!</span>(dat, cols <span class="op">.=&gt;</span> (x <span class="op">-&gt;</span> x <span class="op">.*</span> <span class="st">"Airport"</span>) <span class="op">.=&gt;</span> cols)</span>
 <span id="cb43-16"><a href="#cb43-16"></a></span>
 <span id="cb43-17"><a href="#cb43-17"></a></span>
-<span id="cb43-18"><a href="#cb43-18"></a><span class="co"># Function of multiple variables (by rows)</span></span>
-<span id="cb43-19"><a href="#cb43-19"></a><span class="fu">ratio_airtime</span>(x<span class="op">::</span><span class="dt">NamedTuple</span>) <span class="op">=</span> (x[<span class="fl">1</span>] <span class="op">/</span>(x[<span class="fl">1</span>]<span class="op">+</span>x[<span class="fl">2</span>]))</span>
-<span id="cb43-20"><a href="#cb43-20"></a><span class="pp">@rtransform</span>! dat <span class="op">:</span>frac_air <span class="op">=</span> <span class="fu">ratio_airtime</span>(<span class="fu">AsTable</span>([<span class="op">:</span>air_time, <span class="op">:</span>tot_delay]))</span>
-<span id="cb43-21"><a href="#cb43-21"></a><span class="fu">ratio_airtime</span>(x, y) <span class="op">=</span> (x <span class="op">/</span>(x<span class="op">+</span>y))</span>
-<span id="cb43-22"><a href="#cb43-22"></a><span class="fu">transform</span>(dat, [<span class="op">:</span>air_time, <span class="op">:</span>tot_delay] <span class="op">=&gt;</span> <span class="fu">ByRow</span>((ratio_airtime)) <span class="op">=&gt;</span> <span class="op">:</span>frac_air)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb43-18"><a href="#cb43-18"></a><span class="co"># Apply multiple functions to one variable</span></span>
+<span id="cb43-19"><a href="#cb43-19"></a>list_fun <span class="op">=</span> [mean, median, <span class="fu">x-&gt;quantile</span>(x, <span class="fl">0.25</span>)]</span>
+<span id="cb43-20"><a href="#cb43-20"></a><span class="fu">transform</span>(dat, <span class="op">:</span>dep_delay <span class="op">.=&gt;</span> list_fun <span class="op">.=&gt;</span> [<span class="op">:</span>delay_mean, <span class="op">:</span>delay_median, <span class="op">:</span>delay_q25])</span>
+<span id="cb43-21"><a href="#cb43-21"></a></span>
+<span id="cb43-22"><a href="#cb43-22"></a><span class="co"># Apply multiple functions to multiple variables (automatic renaming)</span></span>
+<span id="cb43-23"><a href="#cb43-23"></a>cols <span class="op">=</span> [<span class="op">:</span>dep_delay <span class="op">:</span>arr_delay]</span>
+<span id="cb43-24"><a href="#cb43-24"></a>res_cols <span class="op">=</span> <span class="fu">kron</span>([<span class="st">"mean_"</span>, <span class="st">"median_"</span>, <span class="st">"q25_"</span>], <span class="fu">string</span>.(cols)) </span>
+<span id="cb43-25"><a href="#cb43-25"></a><span class="fu">transform</span>(dat, cols <span class="op">.=&gt;</span> list_fun <span class="op">.=&gt;</span> res_cols)</span>
+<span id="cb43-26"><a href="#cb43-26"></a></span>
+<span id="cb43-27"><a href="#cb43-27"></a></span>
+<span id="cb43-28"><a href="#cb43-28"></a></span>
+<span id="cb43-29"><a href="#cb43-29"></a><span class="co"># Function of multiple variables (by rows)</span></span>
+<span id="cb43-30"><a href="#cb43-30"></a><span class="fu">ratio_airtime</span>(x<span class="op">::</span><span class="dt">NamedTuple</span>) <span class="op">=</span> (x[<span class="fl">1</span>] <span class="op">/</span>(x[<span class="fl">1</span>]<span class="op">+</span>x[<span class="fl">2</span>]))</span>
+<span id="cb43-31"><a href="#cb43-31"></a><span class="pp">@rtransform</span>! dat <span class="op">:</span>frac_air <span class="op">=</span> <span class="fu">ratio_airtime</span>(<span class="fu">AsTable</span>([<span class="op">:</span>air_time, <span class="op">:</span>tot_delay]))</span>
+<span id="cb43-32"><a href="#cb43-32"></a><span class="fu">ratio_airtime</span>(x, y) <span class="op">=</span> (x <span class="op">/</span>(x<span class="op">+</span>y))</span>
+<span id="cb43-33"><a href="#cb43-33"></a><span class="fu">transform</span>(dat, [<span class="op">:</span>air_time, <span class="op">:</span>tot_delay] <span class="op">=&gt;</span> <span class="fu">ByRow</span>((ratio_airtime)) <span class="op">=&gt;</span> <span class="op">:</span>frac_air)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a><span class="co"># Loops</span></span>
-<span id="cb44-2"><a href="#cb44-2"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"tot_delay"</span>, <span class="st">"dep_delay"</span>)){ <span class="co"># (faster) loops </span></span>
-<span id="cb44-3"><a href="#cb44-3"></a>    <span class="fu">set</span>(dat, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">j=</span>j, <span class="at">value=</span><span class="sc">-</span>dat[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>][[j]])</span>
-<span id="cb44-4"><a href="#cb44-4"></a>}</span>
-<span id="cb44-5"><a href="#cb44-5"></a></span>
-<span id="cb44-6"><a href="#cb44-6"></a><span class="co"># Control flows </span></span>
-<span id="cb44-7"><a href="#cb44-7"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fifelse</span>(arr_delay<span class="sc">&gt;</span><span class="dv">12</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>) ]</span>
-<span id="cb44-8"><a href="#cb44-8"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fcase</span>(arr_delay<span class="sc">&gt;=</span><span class="dv">15</span>, <span class="dv">3</span>, </span>
-<span id="cb44-9"><a href="#cb44-9"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">6</span>,  <span class="dv">2</span>,</span>
-<span id="cb44-10"><a href="#cb44-10"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">0</span>,  <span class="dv">1</span>,</span>
-<span id="cb44-11"><a href="#cb44-11"></a>                                <span class="at">default =</span> <span class="dv">0</span>) ]</span>
-<span id="cb44-12"><a href="#cb44-12"></a></span>
-<span id="cb44-13"><a href="#cb44-13"></a><span class="co"># Modify multiple variables at the same time</span></span>
-<span id="cb44-14"><a href="#cb44-14"></a>cols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"origin"</span>, <span class="st">"dest"</span>)</span>
-<span id="cb44-15"><a href="#cb44-15"></a>dat[, (cols) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(.SD, \(x) <span class="fu">paste</span>(x,<span class="st">"Airport"</span>)), </span>
-<span id="cb44-16"><a href="#cb44-16"></a>    .SDcols <span class="ot">=</span> cols]   </span>
-<span id="cb44-17"><a href="#cb44-17"></a></span>
-<span id="cb44-18"><a href="#cb44-18"></a><span class="co"># Function of multiple variables </span></span>
-<span id="cb44-19"><a href="#cb44-19"></a>dat[, tot_delay <span class="sc">:</span><span class="er">=</span> <span class="fu">rowSums</span>(.SD), .SDcols<span class="ot">=</span><span class="fu">patterns</span>(<span class="st">'*_delay'</span>)]</span>
-<span id="cb44-20"><a href="#cb44-20"></a>ratio_airtime <span class="ot">=</span> <span class="cf">function</span>(air, tot)  (air <span class="sc">/</span>(air<span class="sc">+</span>tot))</span>
-<span id="cb44-21"><a href="#cb44-21"></a><span class="co"># dat[, frac_air := ratio_airtime(air_time, tot_delay) ]</span></span>
-<span id="cb44-22"><a href="#cb44-22"></a>dat[, frac_air <span class="sc">:</span><span class="er">=</span> <span class="fu">ratio_airtime</span>(air_time, tot_delay), by<span class="ot">=</span>.I] <span class="co"># row-wise operation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="annotated-cell-1"><pre class="sourceCode numberSource r code-annotation-code number-lines code-with-copy code-annotated"><code class="sourceCode r"><span id="annotated-cell-1-1"><a href="#annotated-cell-1-1"></a><span class="co"># Loops</span></span>
+<span id="annotated-cell-1-2"><a href="#annotated-cell-1-2"></a><span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">c</span>(<span class="st">"tot_delay"</span>, <span class="st">"dep_delay"</span>)){ <span class="co"># (faster) loops </span></span>
+<span id="annotated-cell-1-3"><a href="#annotated-cell-1-3"></a>    <span class="fu">set</span>(dat, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="at">j=</span>j, <span class="at">value=</span><span class="sc">-</span>dat[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>][[j]])</span>
+<span id="annotated-cell-1-4"><a href="#annotated-cell-1-4"></a>}</span>
+<span id="annotated-cell-1-5"><a href="#annotated-cell-1-5"></a></span>
+<span id="annotated-cell-1-6"><a href="#annotated-cell-1-6"></a><span class="co"># Control flows </span></span>
+<span id="annotated-cell-1-7"><a href="#annotated-cell-1-7"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fifelse</span>(arr_delay<span class="sc">&gt;</span><span class="dv">12</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>) ]</span>
+<span id="annotated-cell-1-8"><a href="#annotated-cell-1-8"></a>dat[, arr_delay_penaly <span class="sc">:</span><span class="er">=</span> <span class="fu">fcase</span>(arr_delay<span class="sc">&gt;=</span><span class="dv">15</span>, <span class="dv">3</span>, </span>
+<span id="annotated-cell-1-9"><a href="#annotated-cell-1-9"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">6</span>,  <span class="dv">2</span>,</span>
+<span id="annotated-cell-1-10"><a href="#annotated-cell-1-10"></a>                                arr_delay<span class="sc">&gt;=</span><span class="dv">0</span>,  <span class="dv">1</span>,</span>
+<span id="annotated-cell-1-11"><a href="#annotated-cell-1-11"></a>                                <span class="at">default =</span> <span class="dv">0</span>) ]</span>
+<span id="annotated-cell-1-12"><a href="#annotated-cell-1-12"></a></span>
+<span id="annotated-cell-1-13"><a href="#annotated-cell-1-13"></a><span class="co"># Modify multiple variables at the same time</span></span>
+<span id="annotated-cell-1-14"><a href="#annotated-cell-1-14"></a>cols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"origin"</span>, <span class="st">"dest"</span>)</span>
+<span id="annotated-cell-1-15"><a href="#annotated-cell-1-15"></a>dat[, (cols) <span class="sc">:</span><span class="er">=</span> <span class="fu">lapply</span>(.SD, \(x) <span class="fu">paste</span>(x,<span class="st">"Airport"</span>)), </span>
+<span id="annotated-cell-1-16"><a href="#annotated-cell-1-16"></a>    .SDcols <span class="ot">=</span> cols]   </span>
+<span id="annotated-cell-1-17"><a href="#annotated-cell-1-17"></a></span>
+<span id="annotated-cell-1-18"><a href="#annotated-cell-1-18"></a><span class="co"># Apply multiple functions to one variable  3b736f67aa239ba993b9674f5b5496bc))</span></span>
+<span id="annotated-cell-1-19"><a href="#annotated-cell-1-19"></a>list_fun <span class="ot">=</span> <span class="cf">function</span>(x) <span class="fu">list</span>(<span class="fu">mean</span>(x), <span class="fu">median</span>(x), <span class="fu">quantile</span>(x, <span class="fl">0.25</span>))</span>
+<span id="annotated-cell-1-20"><a href="#annotated-cell-1-20"></a>dat[, <span class="fu">c</span>(<span class="st">"delay_mean"</span>, <span class="st">"delay_median"</span>, <span class="st">"delay_q25"</span>) <span class="sc">:</span><span class="er">=</span> <span class="fu">sapply</span>(.SD, list_fun), </span>
+<span id="annotated-cell-1-21"><a href="#annotated-cell-1-21"></a>    .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"dep_delay"</span>)]</span>
+<span id="annotated-cell-1-22"><a href="#annotated-cell-1-22"></a></span>
+<span id="annotated-cell-1-23"><a href="#annotated-cell-1-23"></a><span class="co"># Apply multiple functions to multiple variables </span></span>
+<a class="code-annotation-anchor" data-target-cell="annotated-cell-1" data-target-annotation="1" onclick="event.preventDefault();">1</a><span id="annotated-cell-1-24" class="code-annotation-target"><a href="#annotated-cell-1-24"></a>dat[, <span class="fu">as.list</span>(<span class="fu">unlist</span>(<span class="fu">lapply</span>(.SD, list_fun))), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>) ]</span>
+<span id="annotated-cell-1-25"><a href="#annotated-cell-1-25"></a><span class="co"># other method</span></span>
+<span id="annotated-cell-1-26"><a href="#annotated-cell-1-26"></a><span class="fu">melt</span>(dat, <span class="at">measure.vars=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>) )[</span>
+<span id="annotated-cell-1-27"><a href="#annotated-cell-1-27"></a>    , <span class="fu">sapply</span>(.SD, list_fun), .SDcols <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"value"</span>), by <span class="ot">=</span> .(variable)]</span>
+<span id="annotated-cell-1-28"><a href="#annotated-cell-1-28"></a></span>
+<span id="annotated-cell-1-29"><a href="#annotated-cell-1-29"></a><span class="co"># Function of multiple variables </span></span>
+<span id="annotated-cell-1-30"><a href="#annotated-cell-1-30"></a>dat[, tot_delay <span class="sc">:</span><span class="er">=</span> <span class="fu">rowSums</span>(.SD), .SDcols<span class="ot">=</span><span class="fu">patterns</span>(<span class="st">'*_delay'</span>)]</span>
+<span id="annotated-cell-1-31"><a href="#annotated-cell-1-31"></a>ratio_airtime <span class="ot">=</span> <span class="cf">function</span>(air, tot)  (air <span class="sc">/</span>(air<span class="sc">+</span>tot))</span>
+<span id="annotated-cell-1-32"><a href="#annotated-cell-1-32"></a><span class="co"># dat[, frac_air := ratio_airtime(air_time, tot_delay) ]</span></span>
+<span id="annotated-cell-1-33"><a href="#annotated-cell-1-33"></a>dat[, frac_air <span class="sc">:</span><span class="er">=</span> <span class="fu">ratio_airtime</span>(air_time, tot_delay), by<span class="ot">=</span>.I] <span class="co"># row-wise operation</span></span><div class="code-annotation-gutter-bg"></div><div class="code-annotation-gutter"></div></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<dl class="code-annotation-container-grid">
+<dt data-target-cell="annotated-cell-1" data-target-annotation="1">1</dt>
+<dd>
+<span data-code-lines="24" data-code-annotation="1" data-code-cell="annotated-cell-1">See caveat <a href="https://gist.github.com/pbaylis/3b736f67aa239ba993b9674f5b5496bc">here</a></span>
+</dd>
+</dl>
 </div>
 </div>
 </section>
@@ -875,34 +903,34 @@ background: #014421;
 <h4 class="anchored" data-anchor-id="applying-complex-functions">Applying complex functions</h4>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb45"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Regressions by groups</span></span>
-<span id="cb45-2"><a href="#cb45-2"></a><span class="co"># using FixedEffectModels</span></span>
-<span id="cb45-3"><a href="#cb45-3"></a><span class="cf">for</span> subdf <span class="kw">in</span> <span class="fu">groupby</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month])</span>
-<span id="cb45-4"><a href="#cb45-4"></a>    reg_res <span class="op">=</span> <span class="fu">reg</span>(subdf, <span class="pp">@formula</span>(tot_delay <span class="op">~</span> air_time))</span>
-<span id="cb45-5"><a href="#cb45-5"></a>    subdf[<span class="op">:</span>, <span class="op">:</span>β] <span class="op">.=</span> <span class="fu">coef</span>(reg_res)[<span class="fl">2</span>]</span>
-<span id="cb45-6"><a href="#cb45-6"></a>    subdf[<span class="op">:</span> , <span class="op">:</span>σ] <span class="op">.=</span> <span class="fu">sqrt</span>.(<span class="fu">vcov</span>(reg_res)[<span class="fl">2</span>,<span class="fl">2</span>])</span>
-<span id="cb45-7"><a href="#cb45-7"></a><span class="cf">end</span></span>
-<span id="cb45-8"><a href="#cb45-8"></a><span class="fu">select</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>β, <span class="op">:</span>σ]) <span class="op">|&gt;</span> unique</span>
-<span id="cb45-9"><a href="#cb45-9"></a></span>
-<span id="cb45-10"><a href="#cb45-10"></a></span>
-<span id="cb45-11"><a href="#cb45-11"></a></span>
-<span id="cb45-12"><a href="#cb45-12"></a></span>
-<span id="cb45-13"><a href="#cb45-13"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb44-1"><a href="#cb44-1"></a><span class="co"># Regressions by groups</span></span>
+<span id="cb44-2"><a href="#cb44-2"></a><span class="co"># using FixedEffectModels</span></span>
+<span id="cb44-3"><a href="#cb44-3"></a><span class="cf">for</span> subdf <span class="kw">in</span> <span class="fu">groupby</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month])</span>
+<span id="cb44-4"><a href="#cb44-4"></a>    reg_res <span class="op">=</span> <span class="fu">reg</span>(subdf, <span class="pp">@formula</span>(tot_delay <span class="op">~</span> air_time))</span>
+<span id="cb44-5"><a href="#cb44-5"></a>    subdf[<span class="op">:</span>, <span class="op">:</span>β] <span class="op">.=</span> <span class="fu">coef</span>(reg_res)[<span class="fl">2</span>]</span>
+<span id="cb44-6"><a href="#cb44-6"></a>    subdf[<span class="op">:</span> , <span class="op">:</span>σ] <span class="op">.=</span> <span class="fu">sqrt</span>.(<span class="fu">vcov</span>(reg_res)[<span class="fl">2</span>,<span class="fl">2</span>])</span>
+<span id="cb44-7"><a href="#cb44-7"></a><span class="cf">end</span></span>
+<span id="cb44-8"><a href="#cb44-8"></a><span class="fu">select</span>(dat, [<span class="op">:</span>year, <span class="op">:</span>month, <span class="op">:</span>β, <span class="op">:</span>σ]) <span class="op">|&gt;</span> unique</span>
+<span id="cb44-9"><a href="#cb44-9"></a></span>
+<span id="cb44-10"><a href="#cb44-10"></a></span>
+<span id="cb44-11"><a href="#cb44-11"></a></span>
+<span id="cb44-12"><a href="#cb44-12"></a></span>
+<span id="cb44-13"><a href="#cb44-13"></a></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a><span class="co"># Regressions by groups</span></span>
-<span id="cb46-2"><a href="#cb46-2"></a>dat_reg <span class="ot">=</span> dat[, .(</span>
-<span id="cb46-3"><a href="#cb46-3"></a>    {</span>
-<span id="cb46-4"><a href="#cb46-4"></a>        y <span class="ot">=</span> <span class="fu">as.matrix</span>(.SD[[<span class="st">"tot_delay"</span>]]) </span>
-<span id="cb46-5"><a href="#cb46-5"></a>        x <span class="ot">=</span> <span class="fu">as.matrix</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, .SD[[<span class="st">"air_time"</span>]]) )</span>
-<span id="cb46-6"><a href="#cb46-6"></a>        reg_res <span class="ot">=</span> <span class="fu">lm.fit</span>(x, y)</span>
-<span id="cb46-7"><a href="#cb46-7"></a>        b <span class="ot">=</span> <span class="fu">coefficients</span>(reg_res)[<span class="dv">2</span>]</span>
-<span id="cb46-8"><a href="#cb46-8"></a>        se <span class="ot">=</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(reg_res[[<span class="st">"residuals"</span>]]<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">var</span>(.SD[[<span class="st">"air_time"</span>]]) ) <span class="sc">/</span> .N</span>
-<span id="cb46-9"><a href="#cb46-9"></a>        <span class="fu">c</span>(b,se)</span>
-<span id="cb46-10"><a href="#cb46-10"></a>    }, </span>
-<span id="cb46-11"><a href="#cb46-11"></a>    <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">2</span>) ),</span>
-<span id="cb46-12"><a href="#cb46-12"></a>    by <span class="ot">=</span> .(year, month) ]</span>
-<span id="cb46-13"><a href="#cb46-13"></a><span class="fu">dcast</span>(dat_reg, year <span class="sc">+</span> month <span class="sc">~</span> V2, <span class="at">value.var=</span><span class="st">"V1"</span>) <span class="co"># anticipating on reshape section</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a><span class="co"># Regressions by groups</span></span>
+<span id="cb45-2"><a href="#cb45-2"></a>dat_reg <span class="ot">=</span> dat[, .(</span>
+<span id="cb45-3"><a href="#cb45-3"></a>    {</span>
+<span id="cb45-4"><a href="#cb45-4"></a>        y <span class="ot">=</span> <span class="fu">as.matrix</span>(.SD[[<span class="st">"tot_delay"</span>]]) </span>
+<span id="cb45-5"><a href="#cb45-5"></a>        x <span class="ot">=</span> <span class="fu">as.matrix</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, .SD[[<span class="st">"air_time"</span>]]) )</span>
+<span id="cb45-6"><a href="#cb45-6"></a>        reg_res <span class="ot">=</span> <span class="fu">lm.fit</span>(x, y)</span>
+<span id="cb45-7"><a href="#cb45-7"></a>        b <span class="ot">=</span> <span class="fu">coefficients</span>(reg_res)[<span class="dv">2</span>]</span>
+<span id="cb45-8"><a href="#cb45-8"></a>        se <span class="ot">=</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(reg_res[[<span class="st">"residuals"</span>]]<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">var</span>(.SD[[<span class="st">"air_time"</span>]]) ) <span class="sc">/</span> .N</span>
+<span id="cb45-9"><a href="#cb45-9"></a>        <span class="fu">c</span>(b,se)</span>
+<span id="cb45-10"><a href="#cb45-10"></a>    }, </span>
+<span id="cb45-11"><a href="#cb45-11"></a>    <span class="fu">seq</span>(<span class="dv">1</span>,<span class="dv">2</span>) ),</span>
+<span id="cb45-12"><a href="#cb45-12"></a>    by <span class="ot">=</span> .(year, month) ]</span>
+<span id="cb45-13"><a href="#cb45-13"></a><span class="fu">dcast</span>(dat_reg, year <span class="sc">+</span> month <span class="sc">~</span> V2, <span class="at">value.var=</span><span class="st">"V1"</span>) <span class="co"># anticipating on reshape section</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <!-- ----------------------------------------------------------------------------------- -->
@@ -914,18 +942,18 @@ background: #014421;
 <h1>Aggregating</h1>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb47"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb47-1"><a href="#cb47-1"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay))</span>
-<span id="cb47-2"><a href="#cb47-2"></a></span>
-<span id="cb47-3"><a href="#cb47-3"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay), <span class="op">:</span>mean_arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay))</span>
-<span id="cb47-4"><a href="#cb47-4"></a><span class="fu">combine</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean <span class="op">.=&gt;</span> [<span class="op">:</span>mean_dep_delay, <span class="op">:</span>mean_arr_elay])</span>
-<span id="cb47-5"><a href="#cb47-5"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>AsTable <span class="op">=</span> <span class="fu">mean</span>.([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay]))</span>
-<span id="cb47-6"><a href="#cb47-6"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb46-1"><a href="#cb46-1"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay))</span>
+<span id="cb46-2"><a href="#cb46-2"></a></span>
+<span id="cb46-3"><a href="#cb46-3"></a><span class="pp">@combine</span>(dat, <span class="op">:</span>mean_dep_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>dep_delay), <span class="op">:</span>mean_arr_delay <span class="op">=</span> <span class="fu">mean</span>(<span class="op">:</span>arr_delay))</span>
+<span id="cb46-4"><a href="#cb46-4"></a><span class="fu">combine</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean <span class="op">.=&gt;</span> [<span class="op">:</span>mean_dep_delay, <span class="op">:</span>mean_arr_elay])</span>
+<span id="cb46-5"><a href="#cb46-5"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>AsTable <span class="op">=</span> <span class="fu">mean</span>.([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay]))</span>
+<span id="cb46-6"><a href="#cb46-6"></a><span class="pp">@combine</span>(dat, <span class="op">$</span>([<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] <span class="op">.=&gt;</span> mean) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a>dat[, <span class="fu">mean</span>(dep_delay)] <span class="co"># returns a scalar</span></span>
-<span id="cb48-2"><a href="#cb48-2"></a>dat[, .(<span class="at">mean_ddel =</span> <span class="fu">mean</span>(dep_delay))] <span class="co"># returns a data.table</span></span>
-<span id="cb48-3"><a href="#cb48-3"></a>dat[, .(<span class="at">mean_ddel=</span><span class="fu">mean</span>(dep_delay), <span class="at">mean_adel=</span><span class="fu">mean</span>(arr_delay))]</span>
-<span id="cb48-4"><a href="#cb48-4"></a>dat[, <span class="fu">lapply</span>(.SD, mean), .SDcols<span class="ot">=</span><span class="fu">c</span>(<span class="st">'arr_delay'</span>,<span class="st">'dep_delay'</span>)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb47"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1"></a>dat[, <span class="fu">mean</span>(dep_delay)] <span class="co"># returns a scalar</span></span>
+<span id="cb47-2"><a href="#cb47-2"></a>dat[, .(<span class="at">mean_ddel =</span> <span class="fu">mean</span>(dep_delay))] <span class="co"># returns a data.table</span></span>
+<span id="cb47-3"><a href="#cb47-3"></a>dat[, .(<span class="at">mean_ddel=</span><span class="fu">mean</span>(dep_delay), <span class="at">mean_adel=</span><span class="fu">mean</span>(arr_delay))]</span>
+<span id="cb47-4"><a href="#cb47-4"></a>dat[, <span class="fu">lapply</span>(.SD, mean), .SDcols<span class="ot">=</span><span class="fu">c</span>(<span class="st">'arr_delay'</span>,<span class="st">'dep_delay'</span>)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <!-- ----------------------------------------------------------------------------------- -->
@@ -938,23 +966,23 @@ background: #014421;
 <div class="grid">
 <div class="g-col-6">
 <p>Julia uses <code>stack</code> for going from wide to long.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb49-1"><a href="#cb49-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
-<span id="cb49-2"><a href="#cb49-2"></a><span class="pp">@transform</span>!(dat, <span class="op">:</span>uid <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu">nrow</span>(dat))</span>
-<span id="cb49-3"><a href="#cb49-3"></a><span class="fu">stack</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] )</span>
-<span id="cb49-4"><a href="#cb49-4"></a><span class="fu">stack</span>(dat, <span class="st">r"_delay"</span>)</span>
-<span id="cb49-5"><a href="#cb49-5"></a>dat_long <span class="op">=</span> <span class="fu">stack</span>(dat, </span>
-<span id="cb49-6"><a href="#cb49-6"></a>    [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay], </span>
-<span id="cb49-7"><a href="#cb49-7"></a>    [<span class="op">:</span>uid, <span class="op">:</span>carrier, <span class="op">:</span>origin, <span class="op">:</span>dest])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb48"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb48-1"><a href="#cb48-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
+<span id="cb48-2"><a href="#cb48-2"></a><span class="pp">@transform</span>!(dat, <span class="op">:</span>uid <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu">nrow</span>(dat))</span>
+<span id="cb48-3"><a href="#cb48-3"></a><span class="fu">stack</span>(dat, [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay] )</span>
+<span id="cb48-4"><a href="#cb48-4"></a><span class="fu">stack</span>(dat, <span class="st">r"_delay"</span>)</span>
+<span id="cb48-5"><a href="#cb48-5"></a>dat_long <span class="op">=</span> <span class="fu">stack</span>(dat, </span>
+<span id="cb48-6"><a href="#cb48-6"></a>    [<span class="op">:</span>dep_delay, <span class="op">:</span>arr_delay], </span>
+<span id="cb48-7"><a href="#cb48-7"></a>    [<span class="op">:</span>uid, <span class="op">:</span>carrier, <span class="op">:</span>origin, <span class="op">:</span>dest])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
 <p>In data.table, we use the built-in tool <code>melt</code> for going from wide to long.</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
-<span id="cb50-2"><a href="#cb50-2"></a>dat[, uid <span class="sc">:</span><span class="er">=</span> <span class="fu">seq</span>(<span class="dv">1</span>, .N) ]</span>
-<span id="cb50-3"><a href="#cb50-3"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>))</span>
-<span id="cb50-4"><a href="#cb50-4"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">patterns</span>(<span class="st">'_delay'</span>))</span>
-<span id="cb50-5"><a href="#cb50-5"></a>dat_long <span class="ot">=</span> <span class="fu">melt</span>(dat, </span>
-<span id="cb50-6"><a href="#cb50-6"></a>    <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>),</span>
-<span id="cb50-7"><a href="#cb50-7"></a>    <span class="at">id.vars=</span><span class="fu">c</span>(<span class="st">"uid"</span>, <span class="st">"carrier"</span>, <span class="st">"origin"</span>, <span class="st">"dest"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a><span class="co"># It is easier if we give all the flights a unique identifier </span></span>
+<span id="cb49-2"><a href="#cb49-2"></a>dat[, uid <span class="sc">:</span><span class="er">=</span> <span class="fu">seq</span>(<span class="dv">1</span>, .N) ]</span>
+<span id="cb49-3"><a href="#cb49-3"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>))</span>
+<span id="cb49-4"><a href="#cb49-4"></a><span class="fu">melt</span>(dat, <span class="at">measure=</span><span class="fu">patterns</span>(<span class="st">'_delay'</span>))</span>
+<span id="cb49-5"><a href="#cb49-5"></a>dat_long <span class="ot">=</span> <span class="fu">melt</span>(dat, </span>
+<span id="cb49-6"><a href="#cb49-6"></a>    <span class="at">measure=</span><span class="fu">c</span>(<span class="st">"dep_delay"</span>, <span class="st">"arr_delay"</span>),</span>
+<span id="cb49-7"><a href="#cb49-7"></a>    <span class="at">id.vars=</span><span class="fu">c</span>(<span class="st">"uid"</span>, <span class="st">"carrier"</span>, <span class="st">"origin"</span>, <span class="st">"dest"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
@@ -963,17 +991,17 @@ background: #014421;
 <div class="grid">
 <div class="g-col-6">
 <p>Julia uses <code>unstack</code> for going from long to wide.</p>
-<div class="sourceCode" id="cb51"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb51-1"><a href="#cb51-1"></a><span class="co"># We start with the long data from above</span></span>
-<span id="cb51-2"><a href="#cb51-2"></a>dat_wide <span class="op">=</span> <span class="fu">unstack</span>(dat_long)</span>
-<span id="cb51-3"><a href="#cb51-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
-<span id="cb51-4"><a href="#cb51-4"></a><span class="fu">unstack</span>(dat_long, <span class="op">:</span>uid, <span class="op">:</span>variable, <span class="op">:</span>value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb50"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb50-1"><a href="#cb50-1"></a><span class="co"># We start with the long data from above</span></span>
+<span id="cb50-2"><a href="#cb50-2"></a>dat_wide <span class="op">=</span> <span class="fu">unstack</span>(dat_long)</span>
+<span id="cb50-3"><a href="#cb50-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
+<span id="cb50-4"><a href="#cb50-4"></a><span class="fu">unstack</span>(dat_long, <span class="op">:</span>uid, <span class="op">:</span>variable, <span class="op">:</span>value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
 <p>In data.table, we use the built-in tool <code>dcast</code> for going from long to wide.</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># We start with the long data from above</span></span>
-<span id="cb52-2"><a href="#cb52-2"></a>dat_wide <span class="ot">=</span> <span class="fu">dcast</span>(dat_long, ... <span class="sc">~</span> variable)</span>
-<span id="cb52-3"><a href="#cb52-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
-<span id="cb52-4"><a href="#cb52-4"></a><span class="fu">dcast</span>(dat_long, uid <span class="sc">~</span> variable)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a><span class="co"># We start with the long data from above</span></span>
+<span id="cb51-2"><a href="#cb51-2"></a>dat_wide <span class="ot">=</span> <span class="fu">dcast</span>(dat_long, ... <span class="sc">~</span> variable)</span>
+<span id="cb51-3"><a href="#cb51-3"></a><span class="co"># If you only want to keep the id &amp; *_delay cols</span></span>
+<span id="cb51-4"><a href="#cb51-4"></a><span class="fu">dcast</span>(dat_long, uid <span class="sc">~</span> variable)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <!-- ----------------------------------------------------------------------------------- -->
@@ -986,69 +1014,69 @@ background: #014421;
 <h2 class="anchored" data-anchor-id="basic-merge">Basic merge</h2>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb53"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb53-1"><a href="#cb53-1"></a><span class="co"># Load second dataset</span></span>
-<span id="cb53-2"><a href="#cb53-2"></a>dat_airports <span class="op">=</span> CSV.<span class="fu">read</span>(</span>
-<span id="cb53-3"><a href="#cb53-3"></a>    HTTP.<span class="fu">get</span>(<span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>).body,</span>
-<span id="cb53-4"><a href="#cb53-4"></a>    DataFrame) </span>
-<span id="cb53-5"><a href="#cb53-5"></a></span>
-<span id="cb53-6"><a href="#cb53-6"></a><span class="co"># Inner join</span></span>
-<span id="cb53-7"><a href="#cb53-7"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest <span class="op">=&gt;</span> <span class="op">:</span>faa)</span>
-<span id="cb53-8"><a href="#cb53-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
-<span id="cb53-9"><a href="#cb53-9"></a><span class="pp">@rename</span>!(dat_airports, <span class="op">:</span>dest<span class="op">=:</span>faa)</span>
-<span id="cb53-10"><a href="#cb53-10"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-11"><a href="#cb53-11"></a><span class="co"># _join also have an in-place components that updates the first dataframe argument</span></span>
-<span id="cb53-12"><a href="#cb53-12"></a><span class="fu">innerjoin!</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-13"><a href="#cb53-13"></a></span>
-<span id="cb53-14"><a href="#cb53-14"></a></span>
-<span id="cb53-15"><a href="#cb53-15"></a><span class="co"># with missing values</span></span>
-<span id="cb53-16"><a href="#cb53-16"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest; matchmissing<span class="op">=:</span>equal)</span>
-<span id="cb53-17"><a href="#cb53-17"></a></span>
-<span id="cb53-18"><a href="#cb53-18"></a><span class="co"># Other types of merge</span></span>
-<span id="cb53-19"><a href="#cb53-19"></a><span class="co"># Left join</span></span>
-<span id="cb53-20"><a href="#cb53-20"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-21"><a href="#cb53-21"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, source<span class="op">=</span><span class="st">"_merge"</span>) <span class="co"># stata style merge info</span></span>
-<span id="cb53-22"><a href="#cb53-22"></a><span class="co"># if there are missing values in the merge columns</span></span>
-<span id="cb53-23"><a href="#cb53-23"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, matchmissing<span class="op">=:</span>notequal) <span class="co"># </span></span>
-<span id="cb53-24"><a href="#cb53-24"></a><span class="co"># Right join</span></span>
-<span id="cb53-25"><a href="#cb53-25"></a><span class="fu">rightjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-26"><a href="#cb53-26"></a><span class="co"># Outer join</span></span>
-<span id="cb53-27"><a href="#cb53-27"></a><span class="fu">outerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-28"><a href="#cb53-28"></a><span class="co"># Semi join (filtering)</span></span>
-<span id="cb53-29"><a href="#cb53-29"></a><span class="fu">semijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-30"><a href="#cb53-30"></a><span class="co"># Anti join</span></span>
-<span id="cb53-31"><a href="#cb53-31"></a><span class="fu">antijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
-<span id="cb53-32"><a href="#cb53-32"></a><span class="co"># Cross join</span></span>
-<span id="cb53-33"><a href="#cb53-33"></a><span class="fu">crossjoin</span>(<span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>origin)), <span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>dest)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb52"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb52-1"><a href="#cb52-1"></a><span class="co"># Load second dataset</span></span>
+<span id="cb52-2"><a href="#cb52-2"></a>dat_airports <span class="op">=</span> CSV.<span class="fu">read</span>(</span>
+<span id="cb52-3"><a href="#cb52-3"></a>    HTTP.<span class="fu">get</span>(<span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>).body,</span>
+<span id="cb52-4"><a href="#cb52-4"></a>    DataFrame) </span>
+<span id="cb52-5"><a href="#cb52-5"></a></span>
+<span id="cb52-6"><a href="#cb52-6"></a><span class="co"># Inner join</span></span>
+<span id="cb52-7"><a href="#cb52-7"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest <span class="op">=&gt;</span> <span class="op">:</span>faa)</span>
+<span id="cb52-8"><a href="#cb52-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
+<span id="cb52-9"><a href="#cb52-9"></a><span class="pp">@rename</span>!(dat_airports, <span class="op">:</span>dest<span class="op">=:</span>faa)</span>
+<span id="cb52-10"><a href="#cb52-10"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-11"><a href="#cb52-11"></a><span class="co"># _join also have an in-place components that updates the first dataframe argument</span></span>
+<span id="cb52-12"><a href="#cb52-12"></a><span class="fu">innerjoin!</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-13"><a href="#cb52-13"></a></span>
+<span id="cb52-14"><a href="#cb52-14"></a></span>
+<span id="cb52-15"><a href="#cb52-15"></a><span class="co"># with missing values</span></span>
+<span id="cb52-16"><a href="#cb52-16"></a><span class="fu">innerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest; matchmissing<span class="op">=:</span>error)</span>
+<span id="cb52-17"><a href="#cb52-17"></a></span>
+<span id="cb52-18"><a href="#cb52-18"></a><span class="co"># Other types of merge</span></span>
+<span id="cb52-19"><a href="#cb52-19"></a><span class="co"># Left join</span></span>
+<span id="cb52-20"><a href="#cb52-20"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-21"><a href="#cb52-21"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, source<span class="op">=</span><span class="st">"_merge"</span>) <span class="co"># stata style merge info</span></span>
+<span id="cb52-22"><a href="#cb52-22"></a><span class="co"># if there are missing values in the merge columns</span></span>
+<span id="cb52-23"><a href="#cb52-23"></a><span class="fu">leftjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest, matchmissing<span class="op">=:</span>notequal) <span class="co"># </span></span>
+<span id="cb52-24"><a href="#cb52-24"></a><span class="co"># Right join</span></span>
+<span id="cb52-25"><a href="#cb52-25"></a><span class="fu">rightjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-26"><a href="#cb52-26"></a><span class="co"># Outer join</span></span>
+<span id="cb52-27"><a href="#cb52-27"></a><span class="fu">outerjoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-28"><a href="#cb52-28"></a><span class="co"># Semi join (filtering)</span></span>
+<span id="cb52-29"><a href="#cb52-29"></a><span class="fu">semijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-30"><a href="#cb52-30"></a><span class="co"># Anti join</span></span>
+<span id="cb52-31"><a href="#cb52-31"></a><span class="fu">antijoin</span>(dat, dat_airports, on<span class="op">=:</span>dest)</span>
+<span id="cb52-32"><a href="#cb52-32"></a><span class="co"># Cross join</span></span>
+<span id="cb52-33"><a href="#cb52-33"></a><span class="fu">crossjoin</span>(<span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>origin)), <span class="fu">unique</span>(<span class="fu">select</span>(dat, <span class="op">:</span>dest)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a><span class="co"># Load second dataset</span></span>
-<span id="cb54-2"><a href="#cb54-2"></a>dat_airports <span class="ot">=</span> <span class="fu">fread</span>(</span>
-<span id="cb54-3"><a href="#cb54-3"></a>    <span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>) </span>
-<span id="cb54-4"><a href="#cb54-4"></a></span>
-<span id="cb54-5"><a href="#cb54-5"></a></span>
-<span id="cb54-6"><a href="#cb54-6"></a><span class="co"># Inner join (default)</span></span>
-<span id="cb54-7"><a href="#cb54-7"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by.x =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">by.y =</span> <span class="fu">c</span>(<span class="st">"faa"</span>))</span>
-<span id="cb54-8"><a href="#cb54-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
-<span id="cb54-9"><a href="#cb54-9"></a><span class="fu">setnames</span>(dat_airports, <span class="fu">c</span>(<span class="st">"faa"</span>), <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
-<span id="cb54-10"><a href="#cb54-10"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
-<span id="cb54-11"><a href="#cb54-11"></a></span>
-<span id="cb54-12"><a href="#cb54-12"></a><span class="co"># with missing values</span></span>
-<span id="cb54-13"><a href="#cb54-13"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
-<span id="cb54-14"><a href="#cb54-14"></a></span>
-<span id="cb54-15"><a href="#cb54-15"></a><span class="co"># Other types of merge</span></span>
-<span id="cb54-16"><a href="#cb54-16"></a><span class="co"># Left join</span></span>
-<span id="cb54-17"><a href="#cb54-17"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb54-18"><a href="#cb54-18"></a></span>
-<span id="cb54-19"><a href="#cb54-19"></a><span class="co"># Right join</span></span>
-<span id="cb54-20"><a href="#cb54-20"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb54-21"><a href="#cb54-21"></a><span class="co"># Outer join</span></span>
-<span id="cb54-22"><a href="#cb54-22"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>, <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb54-23"><a href="#cb54-23"></a><span class="co"># Semi join (filtering)</span></span>
-<span id="cb54-24"><a href="#cb54-24"></a><span class="fu">merge</span>(dat, dat_airports[, .(dest)], <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
-<span id="cb54-25"><a href="#cb54-25"></a><span class="co"># Anti join</span></span>
-<span id="cb54-26"><a href="#cb54-26"></a>dat[<span class="fu">fsetdiff</span>(dat[, .(dest)], dat_airports[, .(dest)]), on <span class="ot">=</span> <span class="st">"dest"</span>]</span>
-<span id="cb54-27"><a href="#cb54-27"></a><span class="co"># Cross join</span></span>
-<span id="cb54-28"><a href="#cb54-28"></a><span class="fu">CJ</span>(<span class="fu">unique</span>(dat[[<span class="st">"origin"</span>]]), <span class="fu">unique</span>(dat[[<span class="st">"dest"</span>]])) <span class="co"># all combination of origin and destinations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a><span class="co"># Load second dataset</span></span>
+<span id="cb53-2"><a href="#cb53-2"></a>dat_airports <span class="ot">=</span> <span class="fu">fread</span>(</span>
+<span id="cb53-3"><a href="#cb53-3"></a>    <span class="st">"https://vincentarelbundock.github.io/Rdatasets/csv/nycflights13/airports.csv"</span>) </span>
+<span id="cb53-4"><a href="#cb53-4"></a></span>
+<span id="cb53-5"><a href="#cb53-5"></a></span>
+<span id="cb53-6"><a href="#cb53-6"></a><span class="co"># Inner join (default)</span></span>
+<span id="cb53-7"><a href="#cb53-7"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by.x =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">by.y =</span> <span class="fu">c</span>(<span class="st">"faa"</span>))</span>
+<span id="cb53-8"><a href="#cb53-8"></a><span class="co"># if the datasets share a common name for the merge variable</span></span>
+<span id="cb53-9"><a href="#cb53-9"></a><span class="fu">setnames</span>(dat_airports, <span class="fu">c</span>(<span class="st">"faa"</span>), <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb53-10"><a href="#cb53-10"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb53-11"><a href="#cb53-11"></a></span>
+<span id="cb53-12"><a href="#cb53-12"></a><span class="co"># with missing values</span></span>
+<span id="cb53-13"><a href="#cb53-13"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb53-14"><a href="#cb53-14"></a></span>
+<span id="cb53-15"><a href="#cb53-15"></a><span class="co"># Other types of merge</span></span>
+<span id="cb53-16"><a href="#cb53-16"></a><span class="co"># Left join</span></span>
+<span id="cb53-17"><a href="#cb53-17"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb53-18"><a href="#cb53-18"></a></span>
+<span id="cb53-19"><a href="#cb53-19"></a><span class="co"># Right join</span></span>
+<span id="cb53-20"><a href="#cb53-20"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb53-21"><a href="#cb53-21"></a><span class="co"># Outer join</span></span>
+<span id="cb53-22"><a href="#cb53-22"></a><span class="fu">merge</span>(dat, dat_airports, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>), <span class="at">all.x =</span> <span class="cn">TRUE</span>, <span class="at">all.y =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb53-23"><a href="#cb53-23"></a><span class="co"># Semi join (filtering)</span></span>
+<span id="cb53-24"><a href="#cb53-24"></a><span class="fu">merge</span>(dat, dat_airports[, .(dest)], <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"dest"</span>))</span>
+<span id="cb53-25"><a href="#cb53-25"></a><span class="co"># Anti join</span></span>
+<span id="cb53-26"><a href="#cb53-26"></a>dat[<span class="fu">fsetdiff</span>(dat[, .(dest)], dat_airports[, .(dest)]), on <span class="ot">=</span> <span class="st">"dest"</span>]</span>
+<span id="cb53-27"><a href="#cb53-27"></a><span class="co"># Cross join</span></span>
+<span id="cb53-28"><a href="#cb53-28"></a><span class="fu">CJ</span>(<span class="fu">unique</span>(dat[[<span class="st">"origin"</span>]]), <span class="fu">unique</span>(dat[[<span class="st">"dest"</span>]])) <span class="co"># all combination of origin and destinations</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
@@ -1058,18 +1086,18 @@ background: #014421;
 <h4 class="anchored" data-anchor-id="non-equi-joins">Non-equi joins</h4>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb55"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb54"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>dat3 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier     =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
-<span id="cb56-2"><a href="#cb56-2"></a>                  <span class="at">start_month =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">4</span>),</span>
-<span id="cb56-3"><a href="#cb56-3"></a>                  <span class="at">end_month   =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)) </span>
-<span id="cb56-4"><a href="#cb56-4"></a></span>
-<span id="cb56-5"><a href="#cb56-5"></a><span class="co"># Rolling join that catches everything between the distinct</span></span>
-<span id="cb56-6"><a href="#cb56-6"></a><span class="co"># start and end dates for each carrier.</span></span>
-<span id="cb56-7"><a href="#cb56-7"></a>dat[dat3, on <span class="ot">=</span> .(carrier,</span>
-<span id="cb56-8"><a href="#cb56-8"></a>                 month <span class="sc">&gt;=</span> start_month,</span>
-<span id="cb56-9"><a href="#cb56-9"></a>                 month <span class="sc">&lt;=</span> end_month)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a>dat3 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier     =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
+<span id="cb55-2"><a href="#cb55-2"></a>                  <span class="at">start_month =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">4</span>),</span>
+<span id="cb55-3"><a href="#cb55-3"></a>                  <span class="at">end_month   =</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">6</span>)) </span>
+<span id="cb55-4"><a href="#cb55-4"></a></span>
+<span id="cb55-5"><a href="#cb55-5"></a><span class="co"># Rolling join that catches everything between the distinct</span></span>
+<span id="cb55-6"><a href="#cb55-6"></a><span class="co"># start and end dates for each carrier.</span></span>
+<span id="cb55-7"><a href="#cb55-7"></a>dat[dat3, on <span class="ot">=</span> .(carrier,</span>
+<span id="cb55-8"><a href="#cb55-8"></a>                 month <span class="sc">&gt;=</span> start_month,</span>
+<span id="cb55-9"><a href="#cb55-9"></a>                 month <span class="sc">&lt;=</span> end_month)] </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
@@ -1077,19 +1105,19 @@ background: #014421;
 <h4 class="anchored" data-anchor-id="rolling-joins">Rolling joins</h4>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb57"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb56"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb58"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1"></a></span>
-<span id="cb58-2"><a href="#cb58-2"></a><span class="co"># Make sure we have a date variable</span></span>
-<span id="cb58-3"><a href="#cb58-3"></a>dat[, date <span class="sc">:</span><span class="er">=</span> <span class="fu">as.IDate</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">'-'</span>))] </span>
-<span id="cb58-4"><a href="#cb58-4"></a></span>
-<span id="cb58-5"><a href="#cb58-5"></a><span class="co"># New DT with the (random) target dates</span></span>
-<span id="cb58-6"><a href="#cb58-6"></a>dat4 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier  =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
-<span id="cb58-7"><a href="#cb58-7"></a>                  <span class="at">new_date =</span> <span class="fu">as.IDate</span>(<span class="fu">c</span>(<span class="st">'2014-11-01'</span>, <span class="st">'2014-11-15'</span>))) </span>
-<span id="cb58-8"><a href="#cb58-8"></a></span>
-<span id="cb58-9"><a href="#cb58-9"></a><span class="co"># Join on these target dates, so they take the last known value </span></span>
-<span id="cb58-10"><a href="#cb58-10"></a>dat[dat4, on <span class="ot">=</span> .(carrier, <span class="at">date=</span>new_date), roll<span class="ot">=</span><span class="st">'nearest'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a></span>
+<span id="cb57-2"><a href="#cb57-2"></a><span class="co"># Make sure we have a date variable</span></span>
+<span id="cb57-3"><a href="#cb57-3"></a>dat[, date <span class="sc">:</span><span class="er">=</span> <span class="fu">as.IDate</span>(<span class="fu">paste</span>(year, month, day, <span class="at">sep=</span><span class="st">'-'</span>))] </span>
+<span id="cb57-4"><a href="#cb57-4"></a></span>
+<span id="cb57-5"><a href="#cb57-5"></a><span class="co"># New DT with the (random) target dates</span></span>
+<span id="cb57-6"><a href="#cb57-6"></a>dat4 <span class="ot">=</span> <span class="fu">data.table</span>(<span class="at">carrier  =</span> <span class="fu">c</span>(<span class="st">'AA'</span>, <span class="st">'UA'</span>),</span>
+<span id="cb57-7"><a href="#cb57-7"></a>                  <span class="at">new_date =</span> <span class="fu">as.IDate</span>(<span class="fu">c</span>(<span class="st">'2014-11-01'</span>, <span class="st">'2014-11-15'</span>))) </span>
+<span id="cb57-8"><a href="#cb57-8"></a></span>
+<span id="cb57-9"><a href="#cb57-9"></a><span class="co"># Join on these target dates, so they take the last known value </span></span>
+<span id="cb57-10"><a href="#cb57-10"></a>dat[dat4, on <span class="ot">=</span> .(carrier, <span class="at">date=</span>new_date), roll<span class="ot">=</span><span class="st">'nearest'</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </section>
@@ -1097,16 +1125,16 @@ background: #014421;
 <h4 class="anchored" data-anchor-id="appending-data">Appending data</h4>
 <div class="grid">
 <div class="g-col-6">
-<div class="sourceCode" id="cb59"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb59-1"><a href="#cb59-1"></a><span class="fu">vcat</span>(dat, dat)</span>
-<span id="cb59-2"><a href="#cb59-2"></a><span class="fu">vcat</span>(dat, dat, cols<span class="op">=:</span>union)</span>
-<span id="cb59-3"><a href="#cb59-3"></a><span class="fu">reduce</span>(vcat, [dat, dat])</span>
-<span id="cb59-4"><a href="#cb59-4"></a><span class="fu">reduce</span>(vcat, [dat, dat], cols<span class="op">=:</span>union)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb58"><pre class="sourceCode numberSource julia number-lines code-with-copy"><code class="sourceCode julia"><span id="cb58-1"><a href="#cb58-1"></a><span class="fu">vcat</span>(dat, dat)</span>
+<span id="cb58-2"><a href="#cb58-2"></a><span class="fu">vcat</span>(dat, dat, cols<span class="op">=:</span>union)</span>
+<span id="cb58-3"><a href="#cb58-3"></a><span class="fu">reduce</span>(vcat, [dat, dat])</span>
+<span id="cb58-4"><a href="#cb58-4"></a><span class="fu">reduce</span>(vcat, [dat, dat], cols<span class="op">=:</span>union)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="g-col-6">
-<div class="sourceCode" id="cb60"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1"></a><span class="fu">rbind</span>(dat, dat)</span>
-<span id="cb60-2"><a href="#cb60-2"></a><span class="fu">rbind</span>(dat, dat, <span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb60-3"><a href="#cb60-3"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat)) <span class="co"># useful if working with list (purrr)</span></span>
-<span id="cb60-4"><a href="#cb60-4"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat), <span class="at">fill =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1"></a><span class="fu">rbind</span>(dat, dat)</span>
+<span id="cb59-2"><a href="#cb59-2"></a><span class="fu">rbind</span>(dat, dat, <span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb59-3"><a href="#cb59-3"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat)) <span class="co"># useful if working with list (purrr)</span></span>
+<span id="cb59-4"><a href="#cb59-4"></a><span class="fu">rbindlist</span>(<span class="fu">list</span>(dat, dat), <span class="at">fill =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 <!-- ----------------------------------------------------------------------------------- -->

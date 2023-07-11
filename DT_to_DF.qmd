@@ -115,7 +115,7 @@ using ShiftedArrays
 using Dates
 
 # We will need some statistical function from the Base package
-import Statistics: mean 
+import Statistics: mean, median, quantile
 ```
 :::
 
@@ -842,6 +842,17 @@ cols = [:origin, :dest]
 transform!(dat, cols .=> (x -> x .* "Airport") .=> cols)
 
 
+# Apply multiple functions to one variable
+list_fun = [mean, median, x->quantile(x, 0.25)]
+transform(dat, :dep_delay .=> list_fun .=> [:delay_mean, :delay_median, :delay_q25])
+
+# Apply multiple functions to multiple variables (automatic renaming)
+cols = [:dep_delay :arr_delay]
+res_cols = kron(["mean_", "median_", "q25_"], string.(cols)) 
+transform(dat, cols .=> list_fun .=> res_cols)
+
+
+
 # Function of multiple variables (by rows)
 ratio_airtime(x::NamedTuple) = (x[1] /(x[1]+x[2]))
 @rtransform! dat :frac_air = ratio_airtime(AsTable([:air_time, :tot_delay]))
@@ -869,6 +880,17 @@ cols = c("origin", "dest")
 dat[, (cols) := lapply(.SD, \(x) paste(x,"Airport")), 
     .SDcols = cols]   
 
+# Apply multiple functions to one variable  3b736f67aa239ba993b9674f5b5496bc))
+list_fun = function(x) list(mean(x), median(x), quantile(x, 0.25))
+dat[, c("delay_mean", "delay_median", "delay_q25") := sapply(.SD, list_fun), 
+    .SDcols = c("dep_delay")]
+
+# Apply multiple functions to multiple variables 
+dat[, as.list(unlist(lapply(.SD, list_fun))), .SDcols = c("dep_delay", "arr_delay") ] #<1>
+# other method
+melt(dat, measure.vars=c("dep_delay", "arr_delay") )[
+    , sapply(.SD, list_fun), .SDcols = c("value"), by = .(variable)]
+
 # Function of multiple variables 
 dat[, tot_delay := rowSums(.SD), .SDcols=patterns('*_delay')]
 ratio_airtime = function(air, tot)  (air /(air+tot))
@@ -876,6 +898,7 @@ ratio_airtime = function(air, tot)  (air /(air+tot))
 dat[, frac_air := ratio_airtime(air_time, tot_delay), by=.I] # row-wise operation
 
 ```
+1. See caveat [here](https://gist.github.com/pbaylis/3b736f67aa239ba993b9674f5b5496bc)
 :::
 :::
 
@@ -1052,7 +1075,7 @@ innerjoin!(dat, dat_airports, on=:dest)
 
 
 # with missing values
-innerjoin(dat, dat_airports, on=:dest; matchmissing=:equal)
+innerjoin(dat, dat_airports, on=:dest; matchmissing=:error)
 
 # Other types of merge
 # Left join
