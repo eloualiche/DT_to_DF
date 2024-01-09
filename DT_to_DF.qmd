@@ -75,7 +75,9 @@ I recommend that you look at the [installation wiki](https://github.com/Rdatatab
 import Pkg
 Pkg.add("DataFrames")
 Pkg.add("DataFramesMeta")
+```
 
+```{.julia}
 # Load the packages
 using DataFrames
 using DataFramesMeta
@@ -85,11 +87,14 @@ using DataFramesMeta
 ::: {.g-col-6}
 ```{.r}
 install.packages("data.table")
-
 # latest development version that has passed all tests:
 data.table::update_dev_pkg()
+```
+
+```{.r}
 # load the package
 library(data.table)
+ 
 ```
 :::
 :::
@@ -100,12 +105,15 @@ I use the pipe macro in julia and the magrittr package in R to compose commands 
 ::: {.grid}
 ::: {.g-col-6}
 ```{.julia}
+# Install the packages
 Pkg.add("CSV")
 Pkg.add("ShiftedArrays") # lead/lag operators
 Pkg.add("HTTP") # download utilities
 Pkg.add("RDatasets") 
 Pkg.add("Pipe") # pipes
+```
 
+```{.julia}
 # Load the packages
 using HTTP
 using CSV
@@ -121,12 +129,16 @@ import Statistics: mean, median, quantile
 
 ::: {.g-col-6}
 ```{.r}
+# Install the packages
 install.packages("car")       # RDataset
 install.packages("magrittr")  # pipes
 install.packages("statar")    # stata-style data utilities
 install.packages("lubridate") # date utilities
+ 
+```
 
-# Load the package
+```{.julia}
+# Load the packages
 library(car)
 library(magrittr)
 library(statar)
@@ -167,6 +179,10 @@ url_flights = "https://raw.githubusercontent.com/Rdatatable/data.table/master/vi
 url_get = HTTP.get(url_flights);
 dat = CSV.read(url_get.body, DataFrame)
 
+# If the dataset is compressed, the data is expanded to /tmp (see this [issue](https://github.com/JuliaData/CSV.jl/issues/988))
+# If you are limited by how much to write on `/tmp` (HPC) then use 
+dat = CSV.read("file.csv.gz", DataFrame, buffer_in_memory=true)
+
 # Freedman data
 dat_missing = RDatasets.dataset("car", "Freedman")
 ```
@@ -178,6 +194,10 @@ dat_missing = RDatasets.dataset("car", "Freedman")
 url_flights = "https://raw.githubusercontent.com/Rdatatable/data.table/master/vignettes/flights14.csv"
 
 dat = fread(url_flights)
+
+# In fread you can choose to which temp folder to write intermediary files using `tmpdir`
+# Note: this is different from the option offered in `julia`
+fread("file.csv.gz", tmpdir="~/tmp")
 
 # Freedman data
 dat_missing = data.table(Freedman) # load and convert to data.table
@@ -964,6 +984,9 @@ dcast(dat_reg, year + month ~ V2, value.var="V1") # anticipating on reshape sect
 combine(dat, [:dep_delay, :arr_delay] .=> mean .=> [:mean_dep_delay, :mean_arr_elay])
 @combine(dat, $AsTable = mean.([:dep_delay, :arr_delay]))
 @combine(dat, $([:dep_delay, :arr_delay] .=> mean) )
+# More complex but useful for quantiles
+@combine(dat, $AsTable = NamedTuple( (^(:q25_dep_delay), ^(:q75_dep_delay)) .=> 
+    (quantile(:dep_delay, [0.25, 0.75])) ) )
 ```
 :::
 
@@ -973,6 +996,11 @@ dat[, mean(dep_delay)] # returns a scalar
 dat[, .(mean_ddel = mean(dep_delay))] # returns a data.table
 dat[, .(mean_ddel=mean(dep_delay), mean_adel=mean(arr_delay))]
 dat[, lapply(.SD, mean), .SDcols=c('arr_delay','dep_delay')] 
+
+
+# More than one variable
+dat[, as.list(quantile(.SD, c(.25, .75), na.rm = TRUE)), .SDcols="dep_delay" ]   
+# and merge back ...
 ```
 :::
 :::
